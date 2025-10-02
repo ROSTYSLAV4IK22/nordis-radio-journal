@@ -365,7 +365,11 @@ class MainActivity : ComponentActivity() {
                     startDestination = "main",
                     modifier = Modifier.padding(innerPadding)
                 ) {
-                    composable("main") {
+                    composable(
+                        "main",
+                        enterTransition = { EnterTransition.None },
+                        exitTransition = { ExitTransition.None }
+                    ) {
                         MainScreen(
                             viewModel = viewModel,
                             selectedTab = selectedTab
