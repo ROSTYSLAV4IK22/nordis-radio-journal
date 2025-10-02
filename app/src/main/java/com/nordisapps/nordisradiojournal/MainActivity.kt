@@ -377,8 +377,7 @@ class MainActivity : ComponentActivity() {
                             onLanguageChange = { lang ->
                                 onLanguageChange(lang)
                                 navController.popBackStack()
-                            },
-                            onBack = { navController.popBackStack() }
+                            }
                         )
                     }
                 }
