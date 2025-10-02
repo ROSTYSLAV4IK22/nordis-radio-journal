@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.material.icons.outlined.StarBorder
@@ -142,6 +143,7 @@ fun MainScreen(
                             .onFocusChanged { focusState ->
                                 isSearchFocused = focusState.isFocused
                             },
+                        shape = RoundedCornerShape(50.dp),
                         placeholder = { Text(stringResource(R.string.search_placeholder)) },
                         leadingIcon = { Icon(Icons.Default.Search, null) },
                         trailingIcon = {
