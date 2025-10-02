@@ -21,6 +21,10 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Headphones
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -237,10 +241,10 @@ class MainActivity : ComponentActivity() {
             }
         }
         val tabLabels = listOf(
-            R.string.app_name,
-            R.string.title_search_stations,
-            R.string.title_favorites,
-            R.string.title_online_radio
+            R.string.nav_home,
+            R.string.nav_search,
+            R.string.nav_favorites,
+            R.string.nav_listen
         )
 
         Scaffold(
@@ -323,11 +327,19 @@ class MainActivity : ComponentActivity() {
                     }
                     NavigationBar {
                         listOf(
-                            0 to Icons.Filled.Home, 1 to Icons.Filled.Search,
-                            2 to Icons.Filled.Star, 3 to Icons.Filled.Headphones
-                        ).forEach { (index, icon) ->
+                            0 to (Icons.Filled.Home to Icons.Outlined.Home),
+                            1 to (Icons.Filled.Search to Icons.Outlined.Search),
+                            2 to (Icons.Filled.Star to Icons.Outlined.StarBorder),
+                            3 to (Icons.Filled.Headphones to Icons.Outlined.Headphones)
+                        ).forEach { (index, icons) ->
+                            val (filledIcon, outlinedIcon) = icons
                             NavigationBarItem(
-                                icon = { Icon(icon, contentDescription = null) },
+                                icon = {
+                                    Icon(
+                                        imageVector = if (selectedTab == index) filledIcon else outlinedIcon,
+                                        contentDescription = null
+                                    )
+                                },
                                 label = { Text(stringResource(tabLabels[index])) },
                                 selected = selectedTab == index,
                                 onClick = { selectedTab = index }
