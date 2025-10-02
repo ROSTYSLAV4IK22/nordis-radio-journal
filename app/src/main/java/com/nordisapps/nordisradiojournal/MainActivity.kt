@@ -371,7 +371,11 @@ class MainActivity : ComponentActivity() {
                             selectedTab = selectedTab
                         )
                     }
-                    composable("settings") {
+                    composable(
+                        "settings",
+                        enterTransition = { EnterTransition.None },
+                        exitTransition = { ExitTransition.None }
+                    ) {
                         SettingsMenu(
                             currentLanguage = currentLanguage,
                             onLanguageChange = { lang ->
