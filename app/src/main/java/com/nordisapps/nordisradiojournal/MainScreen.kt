@@ -44,6 +44,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -113,16 +114,22 @@ fun MainScreen(
                                     verticalArrangement = Arrangement.Center
                                 ) {
                                     SubcomposeAsyncImage(
+                                        modifier = Modifier
+                                            .size(64.dp)
+                                            .weight(1f, fill = false),
+                                        contentScale = ContentScale.Fit,
                                         model = station.icon ?: "",
                                         imageLoader = imageLoader,
                                         contentDescription = station.name
                                     )
+                                    Spacer(Modifier.height(8.dp))
                                     Text(
                                         text = station.name ?: "",
                                         style = MaterialTheme.typography.bodySmall,
                                         textAlign = TextAlign.Center,
                                         maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.fillMaxWidth()
                                     )
                                 }
                             }
