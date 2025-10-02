@@ -8,6 +8,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -250,79 +252,81 @@ class MainActivity : ComponentActivity() {
 
         Scaffold(
             topBar = {
-                TopAppBar(
-                    title = { Text(topBarTitle) },
-                    navigationIcon = {
-                        if (currentRoute == "settings") {
-                            IconButton(onClick = { navController.popBackStack() }) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = null
-                                )
-                            }
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = { navController.navigate("settings") }) {
-                            Icon(Icons.Default.Settings, contentDescription = "Настройки")
-                        }
-
-                        Box {
-                            if (userPhotoUrl == null) {
-                                IconButton(onClick = onSignInClick) {
+                Column {
+                    TopAppBar(
+                        title = { Text(topBarTitle) },
+                        navigationIcon = {
+                            if (currentRoute == "settings") {
+                                IconButton(onClick = { navController.popBackStack() }) {
                                     Icon(
-                                        Icons.Default.AccountCircle,
-                                        contentDescription = "Войти"
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                        contentDescription = null
                                     )
                                 }
-                            } else {
-                                IconButton(onClick = { showUserMenu = true }) {
-                                    AsyncImage(
-                                        model = userPhotoUrl,
-                                        contentDescription = stringResource(R.string.profile),
-                                        contentScale = ContentScale.Crop,
-                                        modifier = Modifier
-                                            .size(32.dp)
-                                            .clip(CircleShape)
-                                    )
-                                }
-                                DropdownMenu(
-                                    expanded = showUserMenu,
-                                    onDismissRequest = { showUserMenu = false }
-                                ) {
-                                    userName?.let {
+                            }
+                        },
+                        actions = {
+                            IconButton(onClick = { navController.navigate("settings") }) {
+                                Icon(Icons.Default.Settings, contentDescription = "Настройки")
+                            }
+
+                            Box {
+                                if (userPhotoUrl == null) {
+                                    IconButton(onClick = onSignInClick) {
+                                        Icon(
+                                            Icons.Default.AccountCircle,
+                                            contentDescription = "Войти"
+                                        )
+                                    }
+                                } else {
+                                    IconButton(onClick = { showUserMenu = true }) {
+                                        AsyncImage(
+                                            model = userPhotoUrl,
+                                            contentDescription = stringResource(R.string.profile),
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier
+                                                .size(32.dp)
+                                                .clip(CircleShape)
+                                        )
+                                    }
+                                    DropdownMenu(
+                                        expanded = showUserMenu,
+                                        onDismissRequest = { showUserMenu = false }
+                                    ) {
+                                        userName?.let {
+                                            DropdownMenuItem(
+                                                text = { Text(it) },
+                                                onClick = {},
+                                                leadingIcon = {
+                                                    Icon(
+                                                        Icons.Default.AccountCircle,
+                                                        contentDescription = null
+                                                    )
+                                                },
+                                                enabled = false
+                                            )
+                                            HorizontalDivider()
+                                        }
                                         DropdownMenuItem(
-                                            text = { Text(it) },
-                                            onClick = {},
+                                            text = { Text(stringResource(R.string.sign_out)) },
+                                            onClick = {
+                                                showUserMenu = false
+                                                onSignOutClick()
+                                            },
                                             leadingIcon = {
                                                 Icon(
-                                                    Icons.Default.AccountCircle,
+                                                    Icons.AutoMirrored.Filled.ExitToApp,
                                                     contentDescription = null
                                                 )
-                                            },
-                                            enabled = false
+                                            }
                                         )
-                                        HorizontalDivider()
                                     }
-                                    DropdownMenuItem(
-                                        text = { Text(stringResource(R.string.sign_out)) },
-                                        onClick = {
-                                            showUserMenu = false
-                                            onSignOutClick()
-                                        },
-                                        leadingIcon = {
-                                            Icon(
-                                                Icons.AutoMirrored.Filled.ExitToApp,
-                                                contentDescription = null
-                                            )
-                                        }
-                                    )
                                 }
                             }
                         }
-                    }
-                )
-                HorizontalDivider()
+                    )
+                    HorizontalDivider()
+                }
             },
             bottomBar = {
                 Column {
