@@ -275,37 +275,41 @@ fun MainScreen(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Outlined.StarBorder,
-                            contentDescription = null,
-                            modifier = Modifier.size(64.dp),
-                            tint = MaterialTheme.colorScheme.outline
-                        )
-                        Spacer(Modifier.height(16.dp))
-                        Text(
-                            text = stringResource(R.string.no_favorite_stations),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                } else {
-                    LazyColumn {
-                        items(favourites) { station ->
-                            RadioStationItem(
-                                icon = station.icon ?: "",
-                                name = station.name ?: "",
-                                freq = station.freq ?: "",
-                                city = station.stationCity ?: "",
-                                ps = station.ps ?: "",
-                                rt = station.rt ?: "",
-                                isFavourite = true,
-                                onFavouriteClick = { viewModel.toggleFavourite(station) },
-                                onListenClick = { viewModel.playStation(station) }
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.StarBorder,
+                                contentDescription = null,
+                                modifier = Modifier.size(64.dp),
+                                tint = MaterialTheme.colorScheme.outline
+                            )
+                            Spacer(Modifier.height(16.dp))
+                            Text(
+                                text = stringResource(R.string.no_favorite_stations),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
+                    } else {
+                        LazyColumn {
+                            items(favourites) { station ->
+                                RadioStationItem(
+                                    icon = station.icon ?: "",
+                                    name = station.name ?: "",
+                                    freq = station.freq ?: "",
+                                    city = station.stationCity ?: "",
+                                    ps = station.ps ?: "",
+                                    rt = station.rt ?: "",
+                                    isFavourite = true,
+                                    onFavouriteClick = { viewModel.toggleFavourite(station) },
+                                    onListenClick = { viewModel.playStation(station) }
+                                )
+                            }
+                        }
+                    }
                 }
-            }
 
             // 🎧 Слушать
             3 -> {
