@@ -196,6 +196,7 @@ class MainActivity : ComponentActivity() {
                     Toast.LENGTH_SHORT
                 ).show()
             } catch (e: Exception) {
+                Log.w("MainActivity", "Error signing out: ${e.message}", e)
                 Toast.makeText(
                     this@MainActivity,
                     getString(R.string.sign_out_error),
