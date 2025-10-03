@@ -210,6 +210,7 @@ class MainActivity : ComponentActivity() {
             val sharedPref = context.getSharedPreferences("language_settings", MODE_PRIVATE)
             sharedPref.getString("selected_language", "en") ?: "en"
         } catch (e: Exception) {
+            Log.w("MainActivity", "Failed to load saved language, using default: ${e.message}")
             "en"
         }
     }
