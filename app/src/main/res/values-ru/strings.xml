@@ -36,4 +36,7 @@
     <string name="sign_in_error">Ошибка входа: %1$s</string>
     <string name="signed_out_message">Вы вышли из аккаунта</string>
     <string name="sign_out_error">Ошибка при выходе</string>
+    <string name="sign_out_dialog_title">Вы хотите выйти из аккаунта?</string>
+    <string name="sign_out_dialog_confirm">Да</string>
+    <string name="sign_out_dialog_text">Вы уверены, что хотите выйти?</string>
 </resources>
