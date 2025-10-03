@@ -240,11 +240,17 @@ fun MainScreen(
                         items(stations.filter { station ->
                             val matchesSearch = searchQuery.isEmpty() ||
                                     station.name?.contains(searchQuery, ignoreCase = true) == true
-                            val matchedCountry = selectedCountry == null ||
-                                    station.country?.equals(selectedCountry, ignoreCase = true) == true
-                            val matchesCity = selectedCity == null ||
-                                    station.stationCity?.equals(selectedCity, ignoreCase = true) == true
-                            matchesSearch && matchedCountry && matchesCity
+                            val matchesCountry = if (selectedCountry != null) {
+                                station.country?.equals(selectedCountry, ignoreCase = true) == true
+                            } else {
+                                true
+                            }
+                            val matchesCity = if (selectedCity != null) {
+                                station.stationCity?.equals(selectedCity, ignoreCase = true) == true
+                            } else {
+                                true
+                            }
+                            matchesSearch && matchesCountry && matchesCity
                         }) { station ->
                             RadioStationItem(
                                 icon = station.icon ?: "",
