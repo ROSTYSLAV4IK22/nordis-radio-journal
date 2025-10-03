@@ -329,7 +329,9 @@ class MainActivity : ComponentActivity() {
                 }
             },
             bottomBar = {
-                Column {
+                Column(
+                    modifier = Modifier.background(Color.Transparent)
+                ) {
                     uiState.currentStation?.let { station ->
                         MiniPlayer(
                             station = station,
