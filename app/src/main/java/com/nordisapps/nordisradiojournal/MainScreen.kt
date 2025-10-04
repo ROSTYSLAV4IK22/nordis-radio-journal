@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -146,7 +147,7 @@ fun MainScreen(
                         onValueChange = { searchQuery = it },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(48.dp)
+                            .heightIn(min = 56.dp)
                             .onFocusChanged { focusState ->
                                 isSearchFocused = focusState.isFocused
                             },
@@ -159,7 +160,8 @@ fun MainScreen(
                                     Icon(Icons.Default.Clear, null)
                                 }
                             }
-                        }
+                        },
+                        singleLine = true
                     )
 
                     Spacer(Modifier.height(12.dp))
@@ -178,10 +180,13 @@ fun MainScreen(
                                 value = selectedCountry ?: stringResource(R.string.select_country),
                                 onValueChange = {},
                                 readOnly = true,
-                                modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
                                 trailingIcon = {
                                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCountry)
-                                }
+                                },
+                                singleLine = true
                             )
                             ExposedDropdownMenu(
                                 expanded = expandedCountry,
@@ -214,7 +219,8 @@ fun MainScreen(
                                     modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
                                     trailingIcon = {
                                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCity)
-                                    }
+                                    },
+                                    singleLine = true
                                 )
                                 ExposedDropdownMenu(
                                     expanded = expandedCity,
@@ -251,12 +257,13 @@ fun MainScreen(
                                 true
                             }
                             matchesSearch && matchesCountry && matchesCity
-                        }) { station ->
+                        }, {it.id ?: it.name ?: ""}) { station ->
                             RadioStationItem(
                                 icon = station.icon ?: "",
                                 name = station.name ?: "",
                                 freq = station.freq ?: "",
                                 city = station.stationCity ?: "",
+                                location = station.location ?: "",
                                 ps = station.ps ?: "",
                                 rt = station.rt ?: "",
                                 isFavourite = favourites.any { it.id == station.id },
@@ -294,12 +301,13 @@ fun MainScreen(
                     }
                     } else {
                         LazyColumn {
-                            items(favourites) { station ->
+                            items(favourites, { it.id ?: it.name ?: "" }) { station ->
                                 RadioStationItem(
                                     icon = station.icon ?: "",
                                     name = station.name ?: "",
                                     freq = station.freq ?: "",
                                     city = station.stationCity ?: "",
+                                    location = station.location ?: "",
                                     ps = station.ps ?: "",
                                     rt = station.rt ?: "",
                                     isFavourite = true,
