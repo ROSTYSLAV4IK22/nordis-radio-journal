@@ -39,4 +39,5 @@
     <string name="sign_out_dialog_title">Вы хотите выйти из аккаунта?</string>
     <string name="sign_out_dialog_confirm">Да</string>
     <string name="sign_out_dialog_text">Вы уверены, что хотите выйти?</string>
+    <string name="station_location">Локация</string>
 </resources>
