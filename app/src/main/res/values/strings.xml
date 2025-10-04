@@ -18,7 +18,6 @@
     <string name="select_city">Select a city</string>
     <string name="no_favorite_stations">There are no favorite stations yet</string>
     <string name="select_station_to_listen">Select a station to listen to</string>
-    <string name="settings_unavailable">Settings are not available yet</string>
     <string name="popular_stations">Popular stations</string>
     <string name="favorite_stations">Favorite stations</string>
     <string name="country_romania">Romania</string>
