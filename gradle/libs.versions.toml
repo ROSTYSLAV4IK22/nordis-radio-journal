@@ -23,6 +23,9 @@ firebaseDatabase = "21.0.0"
 firebaseAuth = "23.2.1"
 navHost = "2.9.5"
 media3-hls = "1.8.0"
+paging = "3.4.0-alpha04"
+paging-runtime = "3.4.0-alpha04"
+paging-runtime-ktx = "3.4.0-alpha04"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -55,6 +58,9 @@ google-firebase-database = { module = "com.google.firebase:firebase-database-ktx
 google-firebase-auth = { module = "com.google.firebase:firebase-auth-ktx", version.ref = "firebaseAuth" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navHost" }
 androidx-media3-hls = { module = "androidx.media3:media3-exoplayer-hls", version.ref = "media3-hls" }
+androidx-paging-compose = { module = "androidx.paging:paging-compose", version.ref = "paging" }
+androidx-paging-runtime = { module = "androidx.paging:paging-runtime", version.ref = "paging-runtime" }
+androidx-paging-runtime-ktx = { module = "androidx.paging:paging-runtime-ktx", version.ref = "paging-runtime-ktx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
