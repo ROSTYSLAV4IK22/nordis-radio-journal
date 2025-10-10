@@ -53,6 +53,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.media3.common.util.UnstableApi
 import coil.compose.SubcomposeAsyncImage
 
+data class LocationItem(val key: String, val displayName: String)
+
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,31 +63,73 @@ fun MainScreen(
     selectedTab: Int
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var searchQuery by rememberSaveable { mutableStateOf("") }
+    val searchQuery by viewModel.searchQuery.collectAsState()
     var isSearchFocused by rememberSaveable { mutableStateOf(false) }
 
     val stations = uiState.stations
     val favourites = uiState.favouriteStations
+    val filteredStations by viewModel.filteredStations.collectAsState()
 
-    val countries = mapOf(
-        "Romania" to listOf("Constanta", "Brasov", "Bucuresti"),
-        "Ukraine" to listOf("Odesa", "Mykolayiv", "Kyiv")
-    )
+    val keyRomania = stringResource(R.string.key_country_romania)
+    val keyUkraine = stringResource(R.string.key_country_ukraine)
+
+    val displayRomania = stringResource(R.string.country_romania)
+    val displayUkraine = stringResource(R.string.country_ukraine)
+
+    val countries = remember(displayRomania, displayUkraine) {
+        listOf(
+            LocationItem(keyRomania, displayRomania),
+            LocationItem(keyUkraine, displayUkraine)
+        )
+    }
+
+    val keyConstanta = stringResource(R.string.key_city_constanta)
+    val displayConstanta = stringResource(R.string.city_constanta)
+    val keyBrasov = stringResource(R.string.key_city_brasov)
+    val displayBrasov = stringResource(R.string.city_brasov)
+    val keyBucharest = stringResource(R.string.key_city_bucharest)
+    val displayBucharest = stringResource(R.string.city_bucharest)
+
+    val keyOdessa = stringResource(R.string.key_city_odessa)
+    val displayOdessa = stringResource(R.string.city_odessa)
+    val keyKiev = stringResource(R.string.key_city_kiev)
+    val displayKiev = stringResource(R.string.city_kiev)
+    val keyNikolaev = stringResource(R.string.key_city_nikolaev)
+    val displayNikolaev = stringResource(R.string.city_nikolaev)
+
+    val citiesByCountry = remember(
+        keyRomania, keyUkraine, keyConstanta, displayConstanta, keyBrasov, displayBrasov,
+        keyBucharest, displayBucharest, keyOdessa, displayOdessa, keyKiev, displayKiev,
+        keyNikolaev, displayNikolaev
+    ) {
+        mapOf(
+            keyRomania to listOf(
+                LocationItem(keyConstanta, displayConstanta),
+                LocationItem(keyBrasov, displayBrasov),
+                LocationItem(keyBucharest, displayBucharest)
+            ),
+            keyUkraine to listOf(
+                LocationItem(keyOdessa, displayOdessa),
+                LocationItem(keyKiev, displayKiev),
+                LocationItem(keyNikolaev, displayNikolaev)
+            )
+        )
+    }
 
     val context = LocalContext.current
     val imageLoader = (context.applicationContext as MyApp).imageLoader
 
-    var selectedCountry by remember { mutableStateOf<String?>(null) }
+    val selectedCountryKey by viewModel.selectedCountry.collectAsState()
     var expandedCountry by remember { mutableStateOf(false) }
 
-    var selectedCity by remember { mutableStateOf<String?>(null) }
+    val selectedCityKey by viewModel.selectedCity.collectAsState()
     var expandedCity by remember { mutableStateOf(false) }
 
     // 🟢 BackHandler для выхода из поиска
     val focusManager = LocalFocusManager.current
     BackHandler(enabled = isSearchFocused || searchQuery.isNotEmpty()) {
         focusManager.clearFocus(force = true)
-        searchQuery = ""
+        viewModel.setSearchQuery("")
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -144,7 +188,7 @@ fun MainScreen(
                 Column(Modifier.padding(16.dp)) {
                     OutlinedTextField(
                         value = searchQuery,
-                        onValueChange = { searchQuery = it },
+                        onValueChange = { viewModel.setSearchQuery(it) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .heightIn(min = 56.dp)
@@ -156,7 +200,7 @@ fun MainScreen(
                         leadingIcon = { Icon(Icons.Default.Search, null) },
                         trailingIcon = {
                             if (searchQuery.isNotEmpty()) {
-                                IconButton(onClick = { searchQuery = "" }) {
+                                IconButton(onClick = { viewModel.setSearchQuery("") }) {
                                     Icon(Icons.Default.Clear, null)
                                 }
                             }
@@ -177,7 +221,8 @@ fun MainScreen(
                             modifier = Modifier.weight(1f)
                         ) {
                             OutlinedTextField(
-                                value = selectedCountry ?: stringResource(R.string.select_country),
+                                value = countries.find { it.key == selectedCountryKey }?.displayName
+                                    ?: stringResource(R.string.select_country),
                                 onValueChange = {},
                                 readOnly = true,
                                 modifier = Modifier
@@ -192,12 +237,12 @@ fun MainScreen(
                                 expanded = expandedCountry,
                                 onDismissRequest = { expandedCountry = false }
                             ) {
-                                countries.keys.forEach { country ->
+                                countries.forEach { countryItem ->
                                     DropdownMenuItem(
-                                        text = { Text(country) },
+                                        text = { Text(countryItem.displayName) }, // Показываем переведенное имя
                                         onClick = {
-                                            selectedCountry = country
-                                            selectedCity = null
+                                            viewModel.setSelectedCountry(countryItem.key) // Сохраняем непереводимый ключ
+                                            viewModel.setSelectedCity(null)
                                             expandedCountry = false
                                         }
                                     )
@@ -206,14 +251,16 @@ fun MainScreen(
                         }
 
                         // город
-                        if (selectedCountry != null) {
+                        if (selectedCountryKey != null) {
                             ExposedDropdownMenuBox(
                                 expanded = expandedCity,
                                 onExpandedChange = { expandedCity = it },
                                 modifier = Modifier.weight(1f)
                             ) {
+                                val cities = citiesByCountry[selectedCountryKey] ?: emptyList()
                                 OutlinedTextField(
-                                    value = selectedCity ?: stringResource(R.string.select_city),
+                                    value = cities.find { it.key == selectedCityKey }?.displayName
+                                        ?: stringResource(R.string.select_city),
                                     onValueChange = {},
                                     readOnly = true,
                                     modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
@@ -226,11 +273,11 @@ fun MainScreen(
                                     expanded = expandedCity,
                                     onDismissRequest = { expandedCity = false }
                                 ) {
-                                    countries[selectedCountry]!!.forEach { city ->
+                                    cities.forEach { cityItem ->
                                         DropdownMenuItem(
-                                            text = { Text(city) },
+                                            text = { Text(cityItem.displayName) }, // Показываем переведенное имя
                                             onClick = {
-                                                selectedCity = city
+                                                viewModel.setSelectedCity(cityItem.key) // Сохраняем непереводимый ключ
                                                 expandedCity = false
                                             }
                                         )
@@ -242,34 +289,26 @@ fun MainScreen(
 
                     Spacer(Modifier.height(16.dp))
 
-                    LazyColumn {
-                        items(stations.filter { station ->
-                            val matchesSearch = searchQuery.isEmpty() ||
-                                    station.name?.contains(searchQuery, ignoreCase = true) == true
-                            val matchesCountry = if (selectedCountry != null) {
-                                station.country?.equals(selectedCountry, ignoreCase = true) == true
-                            } else {
-                                true
+                    val isFilterActive =
+                        searchQuery.isNotEmpty() || selectedCountryKey != null || selectedCityKey != null
+
+                    if (isFilterActive) {
+                        LazyColumn {
+                            items(filteredStations, key = { it.id ?: it.name ?: "" }) { station ->
+                                RadioStationItem(
+                                    icon = station.icon ?: "",
+                                    name = station.name ?: "",
+                                    freq = station.freq ?: "",
+                                    city = station.stationCity ?: "",
+                                    location = station.location ?: "",
+                                    ps = station.ps ?: "",
+                                    rt = station.rt ?: "",
+                                    isFavourite = favourites.any { it.id == station.id },
+                                    imageLoader = imageLoader,
+                                    onFavouriteClick = { viewModel.toggleFavourite(station) },
+                                    onListenClick = { viewModel.playStation(station) }
+                                )
                             }
-                            val matchesCity = if (selectedCity != null) {
-                                station.stationCity?.equals(selectedCity, ignoreCase = true) == true
-                            } else {
-                                true
-                            }
-                            matchesSearch && matchesCountry && matchesCity
-                        }, {it.id ?: it.name ?: ""}) { station ->
-                            RadioStationItem(
-                                icon = station.icon ?: "",
-                                name = station.name ?: "",
-                                freq = station.freq ?: "",
-                                city = station.stationCity ?: "",
-                                location = station.location ?: "",
-                                ps = station.ps ?: "",
-                                rt = station.rt ?: "",
-                                isFavourite = favourites.any { it.id == station.id },
-                                onFavouriteClick = { viewModel.toggleFavourite(station) },
-                                onListenClick = { viewModel.playStation(station) }
-                            )
                         }
                     }
                 }
@@ -299,25 +338,32 @@ fun MainScreen(
                             )
                         }
                     }
-                    } else {
-                        LazyColumn {
-                            items(favourites, { it.id ?: it.name ?: "" }) { station ->
-                                RadioStationItem(
-                                    icon = station.icon ?: "",
-                                    name = station.name ?: "",
-                                    freq = station.freq ?: "",
-                                    city = station.stationCity ?: "",
-                                    location = station.location ?: "",
-                                    ps = station.ps ?: "",
-                                    rt = station.rt ?: "",
-                                    isFavourite = true,
-                                    onFavouriteClick = { viewModel.toggleFavourite(station) },
-                                    onListenClick = { viewModel.playStation(station) }
-                                )
+                } else {
+                    LazyColumn {
+                        items(
+                            count = favourites.size,
+                            key = { index ->
+                                favourites[index].id ?: favourites[index].name ?: index
                             }
+                        ) { index ->
+                            val station = favourites[index]
+                            RadioStationItem(
+                                icon = station.icon ?: "",
+                                name = station.name ?: "",
+                                freq = station.freq ?: "",
+                                city = station.stationCity ?: "",
+                                location = station.location ?: "",
+                                ps = station.ps ?: "",
+                                rt = station.rt ?: "",
+                                isFavourite = true,
+                                imageLoader = imageLoader,
+                                onFavouriteClick = { viewModel.toggleFavourite(station) },
+                                onListenClick = { viewModel.playStation(station) }
+                            )
                         }
                     }
                 }
+            }
 
             // 🎧 Слушать
             3 -> {
@@ -328,5 +374,3 @@ fun MainScreen(
         }
     }
 }
-
-
