@@ -37,7 +37,8 @@ import androidx.compose.ui.unit.dp
 private val supportedLanguages = mapOf(
     "en" to "English",
     "ru" to "Русский",
-    "uk" to "Українська"
+    "uk" to "Українська",
+    "ro" to "Română"
 )
 
 @Composable
