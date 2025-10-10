@@ -16,7 +16,6 @@
     <string name="select_city">Выберите город</string>
     <string name="no_favorite_stations">Пока нет избранных станций</string>
     <string name="select_station_to_listen">Выберите станцию для прослушивания</string>
-    <string name="settings_unavailable">Настройки пока недоступны</string>
     <string name="popular_stations">Популярные станции</string>
     <string name="favorite_stations">Избранные станции</string>
     <string name="country_romania">Румыния</string>
