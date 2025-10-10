@@ -47,6 +47,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -70,6 +71,7 @@ import coil.compose.AsyncImage
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.nordisapps.nordisradiojournal.ui.components.MiniPlayer
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -111,6 +113,8 @@ class MainActivity : ComponentActivity() {
                     )
                 )
 
+                val scope = rememberCoroutineScope()
+
                 MainApp(
                     viewModel = viewModel,
                     userPhotoUrl = userPhotoUrl,
@@ -120,7 +124,11 @@ class MainActivity : ComponentActivity() {
                     onLanguageChange = { lang ->
                         LanguageManager.saveLanguage(this, lang)
                         viewModel.changeLanguage(lang)
-                        recreate()
+
+                        scope.launch {
+                            delay(250)
+                            recreate()
+                        }
                     },
                     currentLanguage = currentLanguage
                 )
