@@ -33,7 +33,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import java.util.Locale
+
+private val supportedLanguages = mapOf(
+    "en" to "English",
+    "ru" to "Русский"
+)
 
 @Composable
 fun SettingsMenu(
@@ -103,10 +107,6 @@ fun LanguageSelectionDialog(
     onLanguageSelected: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
-    val languages = listOf(
-        "eng" to "English",
-        "ru" to "Русский"
-    )
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -116,7 +116,7 @@ fun LanguageSelectionDialog(
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                items(languages) { (code, name) ->
+                items(supportedLanguages.toList()) { (code, name) ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -145,8 +145,6 @@ fun LanguageSelectionDialog(
     )
 }
 
-@Composable
 fun getLanguageDisplayName(langCode: String): String {
-    val locale = Locale.forLanguageTag(langCode)
-    return locale.getDisplayName(locale)
+    return supportedLanguages[langCode] ?: langCode
 }
