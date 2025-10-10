@@ -39,4 +39,12 @@
     <string name="sign_out_dialog_confirm">Yes</string>
     <string name="sign_out_dialog_text">Are you sure you want to sign out?</string>
     <string name="station_location">Location</string>
+    <string name="key_country_romania" translatable="false">Romania</string>
+    <string name="key_country_ukraine" translatable="false">Ukraine</string>
+    <string name="key_city_constanta" translatable="false">Constanta</string>
+    <string name="key_city_bucharest" translatable="false">Bucuresti</string>
+    <string name="key_city_brasov" translatable="false">Brasov</string>
+    <string name="key_city_odessa" translatable="false">Odesa</string>
+    <string name="key_city_kiev" translatable="false">Kyiv</string>
+    <string name="key_city_nikolaev" translatable="false">Mykolaiv</string>
 </resources>
