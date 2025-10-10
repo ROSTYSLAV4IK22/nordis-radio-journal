@@ -9,8 +9,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,7 +42,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -89,7 +86,7 @@ class MainActivity : ComponentActivity() {
     val userName: String? get() = _userName.value
 
     override fun attachBaseContext(newBase: Context) {
-        val langCode = getSavedLanguage(newBase)
+        val langCode = LanguageManager.getLanguage(newBase)
         val locale = Locale.forLanguageTag(langCode)
         val config = Configuration(newBase.resources.configuration)
         config.setLocale(locale)
@@ -103,31 +100,30 @@ class MainActivity : ComponentActivity() {
 
         checkUserAuthStatus()
 
-        setContent {
-            val currentLanguage by viewModel.languageFlow.collectAsState(initial = "en")
+        // Set initial language in ViewModel
+        viewModel.changeLanguage(LanguageManager.getLanguage(this))
 
-            val context = LocalContext.current
-            val locale = Locale.forLanguageTag(currentLanguage)
-            val localizedContext = context.createConfigurationContext(
-                Configuration().apply { setLocale(locale) }
-            )
-            CompositionLocalProvider(
-                LocalContext provides localizedContext,
-                LocalImageLoader provides (application as MyApp).imageLoader
-            ) {
-                NordisRadioJournalTheme {
-                    MainApp(
-                        viewModel = viewModel,
-                        userPhotoUrl = userPhotoUrl,
-                        userName = userName,
-                        onSignInClick = { startSignIn() },
-                        onSignOutClick = { signOut() },
-                        onLanguageChange = { lang ->
-                            viewModel.changeLanguage(lang)
-                        },
-                        currentLanguage = currentLanguage
+        setContent {
+            NordisRadioJournalTheme {
+                val currentLanguage by viewModel.languageFlow.collectAsState(
+                    initial = LanguageManager.getLanguage(
+                        this
                     )
-                }
+                )
+
+                MainApp(
+                    viewModel = viewModel,
+                    userPhotoUrl = userPhotoUrl,
+                    userName = userName,
+                    onSignInClick = { startSignIn() },
+                    onSignOutClick = { signOut() },
+                    onLanguageChange = { lang ->
+                        LanguageManager.saveLanguage(this, lang)
+                        viewModel.changeLanguage(lang)
+                        recreate()
+                    },
+                    currentLanguage = currentLanguage
+                )
             }
         }
     }
@@ -211,16 +207,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun getSavedLanguage(context: Context): String {
-        return try {
-            val sharedPref = context.getSharedPreferences("language_settings", MODE_PRIVATE)
-            sharedPref.getString("selected_language", "en") ?: "en"
-        } catch (e: Exception) {
-            Log.w("MainActivity", "Failed to load saved language, using default: ${e.message}")
-            "en"
-        }
-    }
-
     @Composable
     fun MainApp(
         viewModel: MainViewModel,
@@ -231,40 +217,33 @@ class MainActivity : ComponentActivity() {
         onLanguageChange: (String) -> Unit,
         currentLanguage: String
     ) {
+        val context = LocalContext.current
         val navController = rememberNavController()
-        var selectedTab by rememberSaveable { mutableIntStateOf(0) }
         var showUserMenu by remember { mutableStateOf(false) }
         var showSignOutDialog by remember { mutableStateOf(false) }
+        var selectedTab by rememberSaveable { mutableIntStateOf(0) }
 
         val uiState by viewModel.uiState.collectAsState()
 
-        // вычисляем title по текущему маршруту (чтобы показывать "Настройки" на settings)
-        val navBackStack by navController.currentBackStackEntryAsState()
-        val currentRoute = navBackStack?.destination?.route ?: "main"
-        val topBarTitle = when (currentRoute) {
-            "settings" -> stringResource(R.string.settings_title)
-            else -> when (selectedTab) {
-                0 -> stringResource(R.string.app_name)
-                1 -> stringResource(R.string.title_search_stations)
-                2 -> stringResource(R.string.title_favorites)
-                3 -> stringResource(R.string.title_online_radio)
-                else -> stringResource(R.string.app_name)
-            }
-        }
-        val tabLabels = listOf(
-            R.string.nav_home,
-            R.string.nav_search,
-            R.string.nav_favorites,
-            R.string.nav_listen
-        )
-
         Scaffold(
+            containerColor = Color.Transparent,
             topBar = {
                 Column {
                     TopAppBar(
-                        title = { Text(topBarTitle) },
+                        title = {
+                            val route =
+                                navController.currentBackStackEntryAsState().value?.destination?.route
+                            Text(
+                                when (route) {
+                                    "settings" -> stringResource(R.string.settings_title)
+                                    else -> stringResource(R.string.app_name)
+                                }
+                            )
+                        },
                         navigationIcon = {
-                            if (currentRoute == "settings") {
+                            val route =
+                                navController.currentBackStackEntryAsState().value?.destination?.route
+                            if (route == "settings") {
                                 IconButton(onClick = { navController.popBackStack() }) {
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -316,7 +295,7 @@ class MainActivity : ComponentActivity() {
                                             HorizontalDivider()
                                         }
                                         DropdownMenuItem(
-                                            text = { Text(stringResource(R.string.sign_out)) },
+                                            text = { Text(context.getString(R.string.sign_out)) },
                                             onClick = {
                                                 showSignOutDialog = true
                                                 showUserMenu = false
@@ -337,9 +316,62 @@ class MainActivity : ComponentActivity() {
                 }
             },
             bottomBar = {
-                Column(
-                    modifier = Modifier.background(Color.Transparent)
+                NavigationBar {
+                    val tabLabels = listOf(
+                        R.string.nav_home,
+                        R.string.nav_search,
+                        R.string.nav_favorites,
+                        R.string.nav_listen
+                    )
+                    val tabIcons = listOf(
+                        Icons.Filled.Home to Icons.Outlined.Home,
+                        Icons.Filled.Search to Icons.Outlined.Search,
+                        Icons.Filled.Star to Icons.Outlined.StarBorder,
+                        Icons.Filled.Headphones to Icons.Outlined.Headphones
+                    )
+                    tabLabels.forEachIndexed { index, labelRes ->
+                        val (filledIcon, outlinedIcon) = tabIcons[index]
+                        NavigationBarItem(
+                            icon = {
+                                Icon(
+                                    imageVector = if (selectedTab == index) filledIcon else outlinedIcon,
+                                    contentDescription = null
+                                )
+                            },
+                            label = { Text(stringResource(labelRes)) },
+                            selected = selectedTab == index,
+                            onClick = { selectedTab = index }
+                        )
+                    }
+                }
+            }
+        ) { padding ->
+            Column(
+                Modifier
+                    .padding(padding)
+                    .background(Color.Transparent)
+            ) {
+                NavHost(
+                    navController = navController,
+                    startDestination = "home",
+                    modifier = Modifier.weight(1f)
                 ) {
+                    composable("home") {
+                        MainScreen(
+                            viewModel = viewModel,
+                            selectedTab = selectedTab
+                        )
+                    }
+                    composable("settings") {
+                        SettingsMenu(
+                            currentLanguage = currentLanguage,
+                            onLanguageChange = { langCode ->
+                                onLanguageChange(langCode)
+                            }
+                        )
+                    }
+                }
+                if (navController.currentBackStackEntryAsState().value?.destination?.route == "home") {
                     uiState.currentStation?.let { station ->
                         MiniPlayer(
                             station = station,
@@ -347,63 +379,13 @@ class MainActivity : ComponentActivity() {
                             isPlaying = uiState.isPlaying,
                             onPlayPauseClick = { viewModel.togglePlayPause() },
                             onClose = { viewModel.closePlayer() },
-                            imageLoader = (LocalContext.current.applicationContext as MyApp).imageLoader
+                            imageLoader = (context.applicationContext as MyApp).imageLoader
                         )
                     }
-                    NavigationBar {
-                        listOf(
-                            0 to (Icons.Filled.Home to Icons.Outlined.Home),
-                            1 to (Icons.Filled.Search to Icons.Outlined.Search),
-                            2 to (Icons.Filled.Star to Icons.Outlined.StarBorder),
-                            3 to (Icons.Filled.Headphones to Icons.Outlined.Headphones)
-                        ).forEach { (index, icons) ->
-                            val (filledIcon, outlinedIcon) = icons
-                            NavigationBarItem(
-                                icon = {
-                                    Icon(
-                                        imageVector = if (selectedTab == index) filledIcon else outlinedIcon,
-                                        contentDescription = null
-                                    )
-                                },
-                                label = { Text(stringResource(tabLabels[index])) },
-                                selected = selectedTab == index,
-                                onClick = { selectedTab = index }
-                            )
-                        }
-                    }
-                }
-            }
-        ) { innerPadding ->
-            NavHost(
-                navController = navController,
-                startDestination = "main",
-                modifier = Modifier.padding(innerPadding)
-            ) {
-                composable(
-                    "main",
-                    enterTransition = { EnterTransition.None },
-                    exitTransition = { ExitTransition.None }
-                ) {
-                    MainScreen(
-                        viewModel = viewModel,
-                        selectedTab = selectedTab
-                    )
-                }
-                composable(
-                    "settings",
-                    enterTransition = { EnterTransition.None },
-                    exitTransition = { ExitTransition.None }
-                ) {
-                    SettingsMenu(
-                        currentLanguage = currentLanguage,
-                        onLanguageChange = { lang ->
-                            onLanguageChange(lang)
-                            navController.popBackStack()
-                        }
-                    )
                 }
             }
         }
+
         if (showSignOutDialog) {
             AlertDialog(
                 onDismissRequest = { showSignOutDialog = false },
@@ -413,15 +395,12 @@ class MainActivity : ComponentActivity() {
                     TextButton(onClick = {
                         showSignOutDialog = false
                         onSignOutClick()
-                    }
-                    ) {
+                    }) {
                         Text(stringResource(R.string.sign_out_dialog_confirm))
                     }
                 },
                 dismissButton = {
-                    TextButton(
-                        onClick = { showSignOutDialog = false },
-                    ) {
+                    TextButton(onClick = { showSignOutDialog = false }) {
                         Text(stringResource(R.string.cancel))
                     }
                 }
