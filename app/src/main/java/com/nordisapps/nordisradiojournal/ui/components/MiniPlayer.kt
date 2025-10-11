@@ -42,7 +42,8 @@ fun MiniPlayer(
     isPlaying: Boolean,
     onPlayPauseClick: () -> Unit,
     onClose: () -> Unit,
-    imageLoader: ImageLoader
+    imageLoader: ImageLoader,
+    modifier: Modifier = Modifier
 ) {
     var isClicked by remember { mutableStateOf(false) }
     var interactionCounter by remember { mutableIntStateOf(0) }
@@ -56,19 +57,19 @@ fun MiniPlayer(
     }
 
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(8.dp),
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Row(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
-                modifier = Modifier
+                modifier = modifier
                     .weight(1f)
                     .clickable(
                         interactionSource = interactionSource,
@@ -141,7 +142,7 @@ fun MiniPlayer(
                         }
 
                         Box(
-                            modifier = Modifier
+                            modifier = modifier
                                 .fillMaxWidth()
                                 .background(Color.Transparent)
                                 .padding(top = 2.dp)
