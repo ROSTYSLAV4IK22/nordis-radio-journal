@@ -9,9 +9,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -38,6 +41,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -102,36 +106,41 @@ class MainActivity : ComponentActivity() {
 
         checkUserAuthStatus()
 
-        // Set initial language in ViewModel
         viewModel.changeLanguage(LanguageManager.getLanguage(this))
 
         setContent {
             NordisRadioJournalTheme {
-                val currentLanguage by viewModel.languageFlow.collectAsState(
-                    initial = LanguageManager.getLanguage(
-                        this
+                Surface(
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    color = Color.Transparent
+                ) {
+                    val currentLanguage by viewModel.languageFlow.collectAsState(
+                        initial = LanguageManager.getLanguage(
+                            this
+                        )
                     )
-                )
 
-                val scope = rememberCoroutineScope()
+                    val scope = rememberCoroutineScope()
 
-                MainApp(
-                    viewModel = viewModel,
-                    userPhotoUrl = userPhotoUrl,
-                    userName = userName,
-                    onSignInClick = { startSignIn() },
-                    onSignOutClick = { signOut() },
-                    onLanguageChange = { lang ->
-                        LanguageManager.saveLanguage(this, lang)
-                        viewModel.changeLanguage(lang)
+                    MainApp(
+                        viewModel = viewModel,
+                        userPhotoUrl = userPhotoUrl,
+                        userName = userName,
+                        onSignInClick = { startSignIn() },
+                        onSignOutClick = { signOut() },
+                        onLanguageChange = { lang ->
+                            LanguageManager.saveLanguage(this, lang)
+                            viewModel.changeLanguage(lang)
 
-                        scope.launch {
-                            delay(250)
-                            recreate()
-                        }
-                    },
-                    currentLanguage = currentLanguage
-                )
+                            scope.launch {
+                                delay(250)
+                                recreate()
+                            }
+                        },
+                        currentLanguage = currentLanguage
+                    )
+                }
             }
         }
     }
@@ -261,7 +270,11 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         actions = {
-                            IconButton(onClick = { navController.navigate("settings") }) {
+                            IconButton(onClick = {
+                                navController.navigate("settings") {
+                                    launchSingleTop = true
+                                }
+                            }) {
                                 Icon(Icons.Default.Settings, contentDescription = "Настройки")
                             }
 
@@ -362,7 +375,19 @@ class MainActivity : ComponentActivity() {
                 NavHost(
                     navController = navController,
                     startDestination = "home",
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    enterTransition = {
+                        slideInHorizontally(initialOffsetX = { it })
+                    },
+                    exitTransition = {
+                        slideOutHorizontally(targetOffsetX = { -it })
+                    },
+                    popEnterTransition = {
+                        slideInHorizontally(initialOffsetX = { -it })
+                    },
+                    popExitTransition = {
+                        slideOutHorizontally(targetOffsetX = { it })
+                    }
                 ) {
                     composable("home") {
                         MainScreen(
