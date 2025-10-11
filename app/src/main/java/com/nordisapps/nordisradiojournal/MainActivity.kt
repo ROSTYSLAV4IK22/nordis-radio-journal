@@ -54,6 +54,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -367,7 +368,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
         ) { padding ->
-            Column(
+            Box(
                 Modifier
                     .padding(padding)
                     .background(Color.Transparent)
@@ -375,7 +376,7 @@ class MainActivity : ComponentActivity() {
                 NavHost(
                     navController = navController,
                     startDestination = "home",
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.fillMaxSize(),
                     enterTransition = {
                         slideInHorizontally(initialOffsetX = { it })
                     },
@@ -412,7 +413,8 @@ class MainActivity : ComponentActivity() {
                             isPlaying = uiState.isPlaying,
                             onPlayPauseClick = { viewModel.togglePlayPause() },
                             onClose = { viewModel.closePlayer() },
-                            imageLoader = (context.applicationContext as MyApp).imageLoader
+                            imageLoader = (context.applicationContext as MyApp).imageLoader,
+                            modifier = Modifier.align(Alignment.BottomCenter)
                         )
                     }
                 }
