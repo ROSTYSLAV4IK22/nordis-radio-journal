@@ -196,6 +196,7 @@ class MainActivity : ComponentActivity() {
                     username = userName,
                     photo = photo
                 )
+                viewModel.onUserChanged()
 
                 Toast.makeText(
                     this@MainActivity,
@@ -219,6 +220,7 @@ class MainActivity : ComponentActivity() {
                 credentialManager.clearCredentialState(
                     androidx.credentials.ClearCredentialStateRequest()
                 )
+                viewModel.onUserChanged()
                 Toast.makeText(
                     this@MainActivity,
                     getString(R.string.signed_out_message),
