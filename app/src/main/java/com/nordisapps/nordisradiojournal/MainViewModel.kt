@@ -165,6 +165,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         exoPlayer.release()
     }
 
+    fun onUserChanged() {
+        loadFavourites()
+    }
+
     fun toggleFavourite(station: Station) {
         val currentFavourites = _uiState.value.favouriteStations.toMutableList()
         if (currentFavourites.any { it.id == station.id }) {
@@ -179,16 +183,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private fun saveFavourites() {
         viewModelScope.launch {
             val user = FirebaseAuth.getInstance().currentUser
+            val favoriteIds = _uiState.value.favouriteStations.mapNotNull { it.id }.toSet()
             if (user != null) {
-                val favoriteIds = _uiState.value.favouriteStations.mapNotNull { it.id }
                 FirebaseDatabase.getInstance()
                     .getReference("favorites")
                     .child(user.uid)
-                    .setValue(favoriteIds)
+                    .setValue(favoriteIds.toList())
             } else {
-                val favoriteNames = _uiState.value.favouriteStations.mapNotNull { it.name }.toSet()
                 context.dataStore.edit { preferences ->
-                    preferences[FAVORITE_STATIONS_KEY] = favoriteNames
+                    preferences[FAVORITE_STATIONS_KEY] = favoriteIds
                 }
             }
         }
@@ -209,8 +212,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     }
             } else {
                 context.dataStore.data.collect { preferences ->
-                    val savedFavorites = preferences[FAVORITE_STATIONS_KEY] ?: emptySet()
-                    val favStations = _uiState.value.stations.filter { it.name in savedFavorites }
+                    val favoriteIds = preferences[FAVORITE_STATIONS_KEY] ?: emptySet()
+                    val favStations = _uiState.value.stations.filter { it.name in favoriteIds }
                     _uiState.value = _uiState.value.copy(favouriteStations = favStations)
                 }
             }
