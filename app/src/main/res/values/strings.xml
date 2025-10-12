@@ -15,7 +15,7 @@
     <string name="cancel">Cancel</string>
     <string name="search_placeholder">Global search…</string>
     <string name="select_country">Select a country</string>
-    <string name="select_city">Select a city</string>
+    <string name="select_city">City</string>
     <string name="no_favorite_stations">There are no favorite stations yet</string>
     <string name="select_station_to_listen">Select a station to listen to</string>
     <string name="popular_stations">Popular stations</string>
@@ -47,4 +47,10 @@
     <string name="key_city_odessa" translatable="false">Odesa</string>
     <string name="key_city_kiev" translatable="false">Kyiv</string>
     <string name="key_city_nikolaev" translatable="false">Mykolaiv</string>
+
+    <!-- App Shortcuts -->
+    <string name="shortcut_search_short">Search</string>
+    <string name="shortcut_search_long">Search a station</string>
+    <string name="shortcut_favorites_short">Favorites</string>
+    <string name="shortcut_favorites_long">My favorite stations</string>
 </resources>

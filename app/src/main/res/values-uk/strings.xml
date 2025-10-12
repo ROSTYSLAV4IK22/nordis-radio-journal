@@ -15,7 +15,7 @@
     <string name="cancel">Скасувати</string>
     <string name="search_placeholder">Глобальний пошук…</string>
     <string name="select_country">Виберіть країну</string>
-    <string name="select_city">Виберіть місто</string>
+    <string name="select_city">Місто</string>
     <string name="no_favorite_stations">Ще немає улюблених станцій</string>
     <string name="select_station_to_listen">Виберіть станцію для прослуховування</string>
     <string name="popular_stations">Популярні станції</string>
@@ -39,4 +39,10 @@
     <string name="sign_out_dialog_confirm">Так</string>
     <string name="sign_out_dialog_text">Ви впевнені, що хочете вийти?</string>
     <string name="station_location">Локація</string>
+
+    <!-- App Shortcuts -->
+    <string name="shortcut_search_short">Пошук</string>
+    <string name="shortcut_search_long">Знайти станцію</string>
+    <string name="shortcut_favorites_short">Вибране</string>
+    <string name="shortcut_favorites_long">Мої обрані станції</string>
 </resources>

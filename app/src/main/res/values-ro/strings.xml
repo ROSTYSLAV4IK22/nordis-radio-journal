@@ -15,7 +15,7 @@
     <string name="cancel">Anula</string>
     <string name="search_placeholder">Căutare globală…</string>
     <string name="select_country">Selectați o țară</string>
-    <string name="select_city">Selectați un oraș</string>
+    <string name="select_city">Oraș</string>
     <string name="no_favorite_stations">Nu există încă posturi preferate</string>
     <string name="select_station_to_listen">Selectați un post de ascultat</string>
     <string name="popular_stations">Posturi populare</string>
@@ -39,4 +39,11 @@
     <string name="sign_out_dialog_confirm">Da</string>
     <string name="sign_out_dialog_text">Sigur vrei să te deconectezi?</string>
     <string name="station_location">Locaţie</string>
+
+    <!-- App Shortcuts -->
+    <string name="shortcut_search_short">Căutare</string>
+    <string name="shortcut_search_long">Găsește o stație</string>
+    <string name="shortcut_favorites_short">Favorite</string>
+    <string name="shortcut_favorites_long">Posturile mele preferate</string>
+
 </resources>
