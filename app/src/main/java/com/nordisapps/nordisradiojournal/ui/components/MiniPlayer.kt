@@ -63,13 +63,13 @@ fun MiniPlayer(
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Row(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
-                modifier = modifier
+                modifier = Modifier
                     .weight(1f)
                     .clickable(
                         interactionSource = interactionSource,
@@ -142,7 +142,7 @@ fun MiniPlayer(
                         }
 
                         Box(
-                            modifier = modifier
+                            modifier = Modifier
                                 .fillMaxWidth()
                                 .background(Color.Transparent)
                                 .padding(top = 2.dp)
