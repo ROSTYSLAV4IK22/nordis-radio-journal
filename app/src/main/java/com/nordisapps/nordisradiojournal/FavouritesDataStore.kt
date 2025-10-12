@@ -8,4 +8,4 @@ import androidx.datastore.preferences.preferencesDataStore
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "favorites")
 
-val FAVORITE_STATIONS_KEY = stringSetPreferencesKey("favorite_stations")
+val FAVORITE_STATIONS_KEY = stringSetPreferencesKey("favorite_stations_ids")
