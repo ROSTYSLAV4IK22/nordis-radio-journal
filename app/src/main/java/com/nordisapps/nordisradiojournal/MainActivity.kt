@@ -1,6 +1,7 @@
 package com.nordisapps.nordisradiojournal
 
 import android.content.Context
+import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
 import android.util.Log
@@ -92,6 +93,8 @@ class MainActivity : ComponentActivity() {
     private val _userName = mutableStateOf<String?>(null)
     val userName: String? get() = _userName.value
 
+    private var initialTab by mutableIntStateOf(0)
+
     override fun attachBaseContext(newBase: Context) {
         val langCode = LanguageManager.getLanguage(newBase)
         val locale = Locale.forLanguageTag(langCode)
@@ -104,6 +107,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         credentialManager = CredentialManager.create(this)
+
+        handleIntent(intent)
 
         checkUserAuthStatus()
 
@@ -139,13 +144,18 @@ class MainActivity : ComponentActivity() {
                                 recreate()
                             }
                         },
-                        currentLanguage = currentLanguage
+                        currentLanguage = currentLanguage,
+                        initialTab = initialTab
                     )
                 }
             }
         }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIntent(intent)
+    }
 
     private fun checkUserAuthStatus() {
         lifecycleScope.launch {
@@ -225,6 +235,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun handleIntent(intent: Intent?) {
+        when (intent?.getStringExtra("shortcut_action")) {
+            "open_search" -> initialTab = 1
+            "open_favorites" -> initialTab = 2
+        }
+    }
+
     @Composable
     fun MainApp(
         viewModel: MainViewModel,
@@ -233,13 +250,14 @@ class MainActivity : ComponentActivity() {
         onSignInClick: () -> Unit,
         onSignOutClick: () -> Unit,
         onLanguageChange: (String) -> Unit,
-        currentLanguage: String
+        currentLanguage: String,
+        initialTab: Int
     ) {
         val context = LocalContext.current
         val navController = rememberNavController()
         var showUserMenu by remember { mutableStateOf(false) }
         var showSignOutDialog by remember { mutableStateOf(false) }
-        var selectedTab by rememberSaveable { mutableIntStateOf(0) }
+        var selectedTab by rememberSaveable(initialTab) { mutableIntStateOf(initialTab) }
 
         val uiState by viewModel.uiState.collectAsState()
 
