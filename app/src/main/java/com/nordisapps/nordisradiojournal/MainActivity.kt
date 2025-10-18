@@ -42,7 +42,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -116,38 +115,32 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             NordisRadioJournalTheme {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxSize(),
-                    color = Color.Transparent
-                ) {
-                    val currentLanguage by viewModel.languageFlow.collectAsState(
-                        initial = LanguageManager.getLanguage(
-                            this
-                        )
+                val currentLanguage by viewModel.languageFlow.collectAsState(
+                    initial = LanguageManager.getLanguage(
+                        this
                     )
+                )
 
-                    val scope = rememberCoroutineScope()
+                val scope = rememberCoroutineScope()
 
-                    MainApp(
-                        viewModel = viewModel,
-                        userPhotoUrl = userPhotoUrl,
-                        userName = userName,
-                        onSignInClick = { startSignIn() },
-                        onSignOutClick = { signOut() },
-                        onLanguageChange = { lang ->
-                            LanguageManager.saveLanguage(this, lang)
-                            viewModel.changeLanguage(lang)
+                MainApp(
+                    viewModel = viewModel,
+                    userPhotoUrl = userPhotoUrl,
+                    userName = userName,
+                    onSignInClick = { startSignIn() },
+                    onSignOutClick = { signOut() },
+                    onLanguageChange = { lang ->
+                        LanguageManager.saveLanguage(this, lang)
+                        viewModel.changeLanguage(lang)
 
-                            scope.launch {
-                                delay(250)
-                                recreate()
-                            }
-                        },
-                        currentLanguage = currentLanguage,
-                        initialTab = initialTab
-                    )
-                }
+                        scope.launch {
+                            delay(250)
+                            recreate()
+                        }
+                    },
+                    currentLanguage = currentLanguage,
+                    initialTab = initialTab
+                )
             }
         }
     }
