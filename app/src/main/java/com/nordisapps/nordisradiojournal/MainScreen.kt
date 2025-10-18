@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.nordisapps.nordisradiojournal.ui.components.RadioStationItem
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -31,6 +32,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.platform.LocalFocusManager
@@ -45,6 +48,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -185,129 +189,164 @@ fun MainScreen(
 
             // 🔍 Поиск
             1 -> {
-                Column(Modifier.padding(16.dp)) {
-                    OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = { viewModel.setSearchQuery(it) },
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Transparent)
+                ) {
+                    Column(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 56.dp)
-                            .onFocusChanged { focusState ->
-                                isSearchFocused = focusState.isFocused
-                            },
-                        shape = RoundedCornerShape(50.dp),
-                        placeholder = { Text(stringResource(R.string.search_placeholder)) },
-                        leadingIcon = { Icon(Icons.Default.Search, null) },
-                        trailingIcon = {
-                            if (searchQuery.isNotEmpty()) {
-                                IconButton(onClick = { viewModel.setSearchQuery("") }) {
-                                    Icon(Icons.Default.Clear, null)
-                                }
-                            }
-                        },
-                        singleLine = true
-                    )
-
-                    Spacer(Modifier.height(12.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
                     ) {
-                        // страна
-                        ExposedDropdownMenuBox(
-                            expanded = expandedCountry,
-                            onExpandedChange = { expandedCountry = it },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            OutlinedTextField(
-                                value = countries.find { it.key == selectedCountryKey }?.displayName
-                                    ?: stringResource(R.string.select_country),
-                                onValueChange = {},
-                                readOnly = true,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
-                                trailingIcon = {
-                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCountry)
+                        OutlinedTextField(
+                            value = searchQuery,
+                            onValueChange = { viewModel.setSearchQuery(it) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 56.dp)
+                                .onFocusChanged { focusState ->
+                                    isSearchFocused = focusState.isFocused
                                 },
-                                singleLine = true
-                            )
-                            ExposedDropdownMenu(
-                                expanded = expandedCountry,
-                                onDismissRequest = { expandedCountry = false }
-                            ) {
-                                countries.forEach { countryItem ->
-                                    DropdownMenuItem(
-                                        text = { Text(countryItem.displayName) }, // Показываем переведенное имя
-                                        onClick = {
-                                            viewModel.setSelectedCountry(countryItem.key) // Сохраняем непереводимый ключ
-                                            viewModel.setSelectedCity(null)
-                                            expandedCountry = false
-                                        }
-                                    )
+                            shape = RoundedCornerShape(50.dp),
+                            placeholder = { Text(stringResource(R.string.search_placeholder)) },
+                            leadingIcon = { Icon(Icons.Default.Search, null) },
+                            trailingIcon = {
+                                if (searchQuery.isNotEmpty()) {
+                                    IconButton(onClick = { viewModel.setSearchQuery("") }) {
+                                        Icon(Icons.Default.Clear, null)
+                                    }
                                 }
-                            }
-                        }
+                            },
+                            singleLine = true
+                        )
 
-                        // город
-                        if (selectedCountryKey != null) {
+                        Spacer(Modifier.height(12.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            // страна
                             ExposedDropdownMenuBox(
-                                expanded = expandedCity,
-                                onExpandedChange = { expandedCity = it },
+                                expanded = expandedCountry,
+                                onExpandedChange = { expandedCountry = it },
                                 modifier = Modifier.weight(1f)
                             ) {
-                                val cities = citiesByCountry[selectedCountryKey] ?: emptyList()
                                 OutlinedTextField(
-                                    value = cities.find { it.key == selectedCityKey }?.displayName
-                                        ?: stringResource(R.string.select_city),
+                                    value = countries.find { it.key == selectedCountryKey }?.displayName
+                                        ?: stringResource(R.string.select_country),
                                     onValueChange = {},
                                     readOnly = true,
-                                    modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
                                     trailingIcon = {
-                                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCity)
+                                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCountry)
                                     },
                                     singleLine = true
                                 )
                                 ExposedDropdownMenu(
-                                    expanded = expandedCity,
-                                    onDismissRequest = { expandedCity = false }
+                                    expanded = expandedCountry,
+                                    onDismissRequest = { expandedCountry = false }
                                 ) {
-                                    cities.forEach { cityItem ->
+                                    countries.forEach { countryItem ->
                                         DropdownMenuItem(
-                                            text = { Text(cityItem.displayName) }, // Показываем переведенное имя
+                                            text = { Text(countryItem.displayName) }, // Показываем переведенное имя
                                             onClick = {
-                                                viewModel.setSelectedCity(cityItem.key) // Сохраняем непереводимый ключ
-                                                expandedCity = false
+                                                viewModel.setSelectedCountry(countryItem.key) // Сохраняем непереводимый ключ
+                                                viewModel.setSelectedCity(null)
+                                                expandedCountry = false
                                             }
                                         )
                                     }
                                 }
                             }
-                        }
-                    }
 
-                    Spacer(Modifier.height(16.dp))
+                            // город
+                            if (selectedCountryKey != null) {
+                                ExposedDropdownMenuBox(
+                                    expanded = expandedCity,
+                                    onExpandedChange = { expandedCity = it },
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    val cities = citiesByCountry[selectedCountryKey] ?: emptyList()
+                                    OutlinedTextField(
+                                        value = cities.find { it.key == selectedCityKey }?.displayName
+                                            ?: stringResource(R.string.select_city),
+                                        onValueChange = {},
+                                        readOnly = true,
+                                        modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+                                        trailingIcon = {
+                                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCity)
+                                        },
+                                        singleLine = true
+                                    )
+                                    ExposedDropdownMenu(
+                                        expanded = expandedCity,
+                                        onDismissRequest = { expandedCity = false }
+                                    ) {
+                                        cities.forEach { cityItem ->
+                                            DropdownMenuItem(
+                                                text = { Text(cityItem.displayName) }, // Показываем переведенное имя
+                                                onClick = {
+                                                    viewModel.setSelectedCity(cityItem.key) // Сохраняем непереводимый ключ
+                                                    expandedCity = false
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(Modifier.height(16.dp))
+                    }
 
                     val isFilterActive =
                         searchQuery.isNotEmpty() || selectedCountryKey != null || selectedCityKey != null
-
-                    if (isFilterActive) {
-                        LazyColumn {
-                            items(filteredStations, key = { it.id ?: it.name ?: "" }) { station ->
-                                RadioStationItem(
-                                    icon = station.icon ?: "",
-                                    name = station.name ?: "",
-                                    freq = station.freq ?: "",
-                                    city = station.stationCity ?: "",
-                                    location = station.location ?: "",
-                                    ps = station.ps ?: "",
-                                    rt = station.rt ?: "",
-                                    isFavourite = favourites.any { it.id == station.id },
-                                    imageLoader = imageLoader,
-                                    onFavouriteClick = { viewModel.toggleFavourite(station) },
-                                    onListenClick = { viewModel.playStation(station) }
-                                )
+                    val showPrompt = searchQuery.isEmpty() && selectedCountryKey == null
+                    if (showPrompt) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = stringResource(R.string.search_or_filter_prompt),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    } else {
+                        if (filteredStations.isEmpty()) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(stringResource(R.string.no_stations_found))
+                            }
+                        } else {
+                            if (isFilterActive) {
+                                LazyColumn(
+                                    modifier = Modifier.padding(horizontal = 8.dp)
+                                ) {
+                                    items(
+                                        filteredStations,
+                                        key = { it.id ?: it.name ?: "" }) { station ->
+                                        RadioStationItem(
+                                            icon = station.icon ?: "",
+                                            name = station.name ?: "",
+                                            freq = station.freq ?: "",
+                                            city = station.stationCity ?: "",
+                                            location = station.location ?: "",
+                                            ps = station.ps ?: "",
+                                            rt = station.rt ?: "",
+                                            isFavourite = favourites.any { it.id == station.id },
+                                            imageLoader = imageLoader,
+                                            onFavouriteClick = { viewModel.toggleFavourite(station) },
+                                            onListenClick = { viewModel.playStation(station) }
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
@@ -367,8 +406,73 @@ fun MainScreen(
 
             // 🎧 Слушать
             3 -> {
-                Column(Modifier.padding(16.dp)) {
-                    Text(stringResource(R.string.select_station_to_listen))
+                val recentlyPlayed = uiState.recentlyPlayedStations
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.recently_played),
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
+                    if (recentlyPlayed.isEmpty()) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                stringResource(R.string.select_station_to_listen),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    } else {
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(3),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(
+                                count = recentlyPlayed.size,
+                                key = { index -> recentlyPlayed[index].id ?: index }
+                            ) { index ->
+                                val station = recentlyPlayed[index]
+                                Card(
+                                    modifier = Modifier.height(140.dp),
+                                    onClick = { viewModel.playStation(station) }
+                                ) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(12.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.Center
+                                    ) {
+                                        SubcomposeAsyncImage(
+                                            modifier = Modifier
+                                                .size(64.dp)
+                                                .weight(1f, fill = false),
+                                            contentScale = ContentScale.Fit,
+                                            model = station.icon ?: "",
+                                            imageLoader = imageLoader,
+                                            contentDescription = station.name
+                                        )
+                                        Spacer(Modifier.height(8.dp))
+                                        Text(
+                                            text = station.name ?: "",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            textAlign = TextAlign.Center,
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
