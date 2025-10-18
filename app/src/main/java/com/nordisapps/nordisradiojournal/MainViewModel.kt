@@ -121,6 +121,45 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             loadStations { loadedStations ->
                 _uiState.value = _uiState.value.copy(stations = loadedStations)
                 loadFavourites()
+                loadRecentlyPlayed()
+            }
+        }
+    }
+
+    private fun addStationToHistory(station: Station) {
+        viewModelScope.launch {
+            val currentHistory = _uiState.value.recentlyPlayedStations.toMutableList()
+
+            currentHistory.removeAll { it.id == station.id }
+            currentHistory.add(0, station)
+            val updatedHistory = currentHistory.take(3)
+
+            _uiState.value = _uiState.value.copy(recentlyPlayedStations = updatedHistory)
+            saveRecentlyPlayed(updatedHistory)
+        }
+    }
+
+    private fun saveRecentlyPlayed(history: List<Station>) {
+        viewModelScope.launch {
+            val historyIds = history.mapNotNull { it.id }
+            val historyString = historyIds.joinToString(",")
+            context.dataStore.edit { preferences ->
+                preferences[RECENTLY_PLAYED_KEY] = historyString
+            }
+        }
+    }
+
+    private fun loadRecentlyPlayed() {
+        viewModelScope.launch {
+            context.dataStore.data.collect { preferences ->
+                val historyString = preferences[RECENTLY_PLAYED_KEY] ?: ""
+                if (historyString.isNotEmpty()) {
+                    val historyIds = historyString.split(",")
+                    val historyStations = historyIds.mapNotNull { id ->
+                        _uiState.value.stations.find { it.id == id }
+                    }
+                    _uiState.value = _uiState.value.copy(recentlyPlayedStations = historyStations)
+                }
             }
         }
     }
@@ -140,6 +179,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             currentStation = station,
             isPlaying = true
         )
+        addStationToHistory(station)
     }
 
     fun togglePlayPause() {
@@ -213,7 +253,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             } else {
                 context.dataStore.data.collect { preferences ->
                     val favoriteIds = preferences[FAVORITE_STATIONS_KEY] ?: emptySet()
-                    val favStations = _uiState.value.stations.filter { it.name in favoriteIds }
+                    val favStations = _uiState.value.stations.filter { it.id in favoriteIds }
                     _uiState.value = _uiState.value.copy(favouriteStations = favStations)
                 }
             }
