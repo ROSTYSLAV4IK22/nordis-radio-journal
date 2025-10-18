@@ -11,16 +11,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImagePainter
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.window.Dialog
 import coil.ImageLoader
 import com.nordisapps.nordisradiojournal.R
 
@@ -39,8 +43,7 @@ fun RadioStationItem(
     onListenClick: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-
-    val onFavouriteHandler = { onFavouriteClick() }
+    var showImageDialog by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier
@@ -52,15 +55,16 @@ fun RadioStationItem(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { expanded = !expanded }
                     .padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 SubcomposeAsyncImage(
                     model = icon,
                     imageLoader = imageLoader,
-                    contentDescription = null,
-                    modifier = Modifier.size(40.dp)
+                    contentDescription = name,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clickable { showImageDialog = true }
                 ) {
                     when (painter.state) {
                         is AsyncImagePainter.State.Loading -> {
@@ -79,7 +83,13 @@ fun RadioStationItem(
                     }
                 }
                 Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { expanded = !expanded }
+                        .padding(horizontal = 4.dp)
+                ) {
                     Text(
                         name,
                         style = MaterialTheme.typography.titleMedium
@@ -103,28 +113,31 @@ fun RadioStationItem(
                     }
                 }
 
-                Icon(
-                    imageVector = if (isFavourite) Icons.Filled.Star else Icons.Outlined.StarBorder,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clickable(onClick = onFavouriteHandler)
-                )
+                IconButton(onClick = { onFavouriteClick() }) {
+                    Icon(
+                        imageVector = if (isFavourite) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(24.dp)
+                    )
+                }
 
                 Spacer(Modifier.width(8.dp))
 
-                val rotation by animateFloatAsState(if (expanded) 180f else 0f)
-                Icon(
-                    imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = null,
-                    modifier = Modifier.rotate(rotation)
-                )
+                IconButton(onClick = { expanded = !expanded }) {
+                    val rotation by animateFloatAsState(if (expanded) 180f else 0f)
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = null,
+                        modifier = Modifier.rotate(rotation)
+                    )
+                }
             }
 
             AnimatedVisibility(expanded) {
                 Column(
                     modifier = Modifier
-                        .padding(8.dp)
+                        .padding(start = 16.dp, end = 16.dp, top = 8.dp)
                 ) {
                     Text("${stringResource(R.string.station_location)}: ${location ?: "-"}")
                     Text("PS: ${ps ?: "-"}")
@@ -143,6 +156,45 @@ fun RadioStationItem(
                             modifier = Modifier.size(24.dp)
                         )
                         Text(stringResource(R.string.btn_listen_online))
+                    }
+                }
+            }
+        }
+    }
+
+    if (showImageDialog) {
+        EnlargedStationIconDialog(
+            iconUrl = icon,
+            imageLoader = imageLoader,
+            onDismiss = { showImageDialog = false }
+        )
+    }
+}
+
+@Composable
+private fun EnlargedStationIconDialog(
+    iconUrl: String,
+    imageLoader: ImageLoader,onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier
+                .size(250.dp)
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                SubcomposeAsyncImage(
+                    model = iconUrl,
+                    imageLoader = imageLoader,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Fit
+                ) {
+                    if (painter.state is AsyncImagePainter.State.Loading) {
+                        CircularProgressIndicator()
                     }
                 }
             }
