@@ -4,9 +4,11 @@ import android.app.Application
 import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
+import androidx.media3.common.Tracks
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
@@ -108,6 +110,25 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     _uiState.value = _uiState.value.copy(currentTrackTitle = entry.title)
                 }
             }
+        }
+
+        override fun onTracksChanged(tracks: Tracks) {
+            var newBitrate: Int? = null
+            // Проходим по всем группам треков (аудио, видео, текст)
+            for (trackGroup in tracks.groups) {
+                // Нас интересует только активный аудио-трек
+                if (trackGroup.isSelected && trackGroup.type == C.TRACK_TYPE_AUDIO) {
+                    // Получаем формат активного трека
+                    val format = trackGroup.getTrackFormat(0) // Обычно у аудио-потока один трек
+                    // Из формата извлекаем битрейт (он в битах в секунду)
+                    val bitrateBps = format.bitrate
+                    if (bitrateBps != C.RATE_UNSET_INT) {
+                        // Переводим в килобиты в секунду для удобства
+                        newBitrate = bitrateBps / 1000
+                    }
+                }
+            }
+            _uiState.value = _uiState.value.copy(currentBitrate = newBitrate)
         }
     }
 
