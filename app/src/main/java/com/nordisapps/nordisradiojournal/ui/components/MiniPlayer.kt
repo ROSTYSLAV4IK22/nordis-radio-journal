@@ -42,6 +42,7 @@ fun MiniPlayer(
     isPlaying: Boolean,
     onPlayPauseClick: () -> Unit,
     onClose: () -> Unit,
+    onExpandClick: () -> Unit,
     imageLoader: ImageLoader,
     modifier: Modifier = Modifier
 ) {
@@ -201,15 +202,12 @@ fun MiniPlayer(
                 if (isPlaying) {
                     EqualizerAnimation()
                     IconButton(
-                        onClick = {
-                            isClicked = true
-                            interactionCounter++
-                        },
+                        onClick = onExpandClick,
                         modifier = Modifier.size(32.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.KeyboardArrowUp,
-                            contentDescription = null,
+                            contentDescription = "Expand Player",
                             modifier = Modifier.size(28.dp)
                         )
                     }
