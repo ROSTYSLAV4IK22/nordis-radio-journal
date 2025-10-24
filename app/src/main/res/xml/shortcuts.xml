@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Ярлык №1: Поиск -->
+    <shortcut
+        android:shortcutId="search"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_search"
+        android:shortcutShortLabel="@string/shortcut_search_short"
+        android:shortcutLongLabel="@string/shortcut_search_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.nordisapps.nordisradiojournal"
+            android:targetClass="com.nordisapps.nordisradiojournal.MainActivity">
+            <!-- Самое важное: передаем уникальную метку, чтобы знать, что открыть -->
+            <extra android:name="shortcut_action" android:value="open_search" />
+        </intent>
+    </shortcut>
+
+    <!-- Ярлык №2: Избранное -->
+    <shortcut
+        android:shortcutId="favorites"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_favorites"
+        android:shortcutShortLabel="@string/shortcut_favorites_short"
+        android:shortcutLongLabel="@string/shortcut_favorites_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.nordisapps.nordisradiojournal"
+            android:targetClass="com.nordisapps.nordisradiojournal.MainActivity">
+            <!-- Другая уникальная метка -->
+            <extra android:name="shortcut_action" android:value="open_favorites" />
+        </intent>
+    </shortcut>
+
+</shortcuts>
