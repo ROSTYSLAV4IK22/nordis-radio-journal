@@ -10,8 +10,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -75,6 +78,7 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.nordisapps.nordisradiojournal.ui.components.FullPlayer
 import com.nordisapps.nordisradiojournal.ui.components.MiniPlayer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -252,6 +256,7 @@ class MainActivity : ComponentActivity() {
         val navController = rememberNavController()
         var showUserMenu by remember { mutableStateOf(false) }
         var showSignOutDialog by remember { mutableStateOf(false) }
+        var showFullPlayer by remember { mutableStateOf(false) }
         var selectedTab by rememberSaveable(initialTab) { mutableIntStateOf(initialTab) }
 
         val uiState by viewModel.uiState.collectAsState()
@@ -426,10 +431,30 @@ class MainActivity : ComponentActivity() {
                             isPlaying = uiState.isPlaying,
                             onPlayPauseClick = { viewModel.togglePlayPause() },
                             onClose = { viewModel.closePlayer() },
+                            onExpandClick = { showFullPlayer = true },
                             imageLoader = (context.applicationContext as MyApp).imageLoader,
                             modifier = Modifier.align(Alignment.BottomCenter)
                         )
                     }
+                }
+            }
+            AnimatedVisibility(
+                visible = showFullPlayer,
+                enter = slideInVertically(initialOffsetY = { it }),
+                exit = slideOutVertically(targetOffsetY = { it })
+            ) {
+                if (uiState.currentStation != null) {
+                    FullPlayer(
+                        station = uiState.currentStation!!,
+                        trackTitle = uiState.currentTrackTitle,
+                        isPlaying = uiState.isPlaying,
+                        onPlayPauseClick = { viewModel.togglePlayPause() },
+                        currentBitrate = uiState.currentBitrate,
+                        favouriteStations = uiState.favouriteStations,
+                        onToggleFavourite = { viewModel.toggleFavourite(uiState.currentStation!!) },
+                        imageLoader = (context.applicationContext as MyApp).imageLoader,
+                        onDismiss = { showFullPlayer = false } // Передаем действие для закрытия
+                    )
                 }
             }
         }
