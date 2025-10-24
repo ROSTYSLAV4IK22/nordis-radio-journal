@@ -12,6 +12,7 @@
     <string name="btn_settings">Настройки</string>
     <string name="cancel">Отмена</string>
     <string name="search_placeholder">Поиск…</string>
+    <string name="search_or_filter_prompt">Найдите станции с помощью поиска\nили используйте фильтры по стране и городу.</string>
     <string name="select_country">Выберите страну</string>
     <string name="select_city">Город</string>
     <string name="no_favorite_stations">Пока нет избранных станций</string>
@@ -45,4 +46,6 @@
     <string name="shortcut_search_long">Найти станцию</string>
     <string name="shortcut_favorites_short">Избранное</string>
     <string name="shortcut_favorites_long">Мои избранные станции</string>
+    <string name="no_stations_found">Ничего не найдено</string>
+    <string name="recently_played">Недавно прослушано</string>
 </resources>
