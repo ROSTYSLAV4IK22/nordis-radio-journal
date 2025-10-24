@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "700543803497",
+    "firebase_url": "https://nordis-radio-journal-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "nordis-radio-journal",
+    "storage_bucket": "nordis-radio-journal.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:700543803497:android:1e14f14969bf2fa4f542f8",
+        "android_client_info": {
+          "package_name": "com.nordisapps.nordisradiojournal"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "700543803497-3j2gt3jicglvthou4hd2jbg4pe9mki74.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.nordisapps.nordisradiojournal",
+            "certificate_hash": "65fc752b74043200dfde1bfa2ecae5d5f80e6a4b"
+          }
+        },
+        {
+          "client_id": "700543803497-12e55ldbu0tf2vfoc9t1u9ipqk3e02d5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAMP9ZMmvqj6_VUsmkTc4F3jSoWXgyVjUI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "700543803497-12e55ldbu0tf2vfoc9t1u9ipqk3e02d5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
