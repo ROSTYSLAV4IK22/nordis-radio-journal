@@ -14,6 +14,7 @@
     <string name="btn_settings">Setări</string>
     <string name="cancel">Anula</string>
     <string name="search_placeholder">Căutare globală…</string>
+    <string name="search_or_filter_prompt">Găsiți stații folosind căutarea\nsau folosiți filtre după țară și oraș</string>
     <string name="select_country">Selectați o țară</string>
     <string name="select_city">Oraș</string>
     <string name="no_favorite_stations">Nu există încă posturi preferate</string>
@@ -45,5 +46,7 @@
     <string name="shortcut_search_long">Găsește o stație</string>
     <string name="shortcut_favorites_short">Favorite</string>
     <string name="shortcut_favorites_long">Posturile mele preferate</string>
+    <string name="no_stations_found">Nu s-a găsit nimic</string>
+    <string name="recently_played">Ascultat recent</string>
 
 </resources>
