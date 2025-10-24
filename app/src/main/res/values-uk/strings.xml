@@ -14,6 +14,7 @@
     <string name="btn_settings">Налаштування</string>
     <string name="cancel">Скасувати</string>
     <string name="search_placeholder">Глобальний пошук…</string>
+    <string name="search_or_filter_prompt">Знайдіть станції за допомогою пошуку\nабо скористайтеся фільтрами за країною та містом</string>
     <string name="select_country">Виберіть країну</string>
     <string name="select_city">Місто</string>
     <string name="no_favorite_stations">Ще немає улюблених станцій</string>
@@ -45,4 +46,6 @@
     <string name="shortcut_search_long">Знайти станцію</string>
     <string name="shortcut_favorites_short">Вибране</string>
     <string name="shortcut_favorites_long">Мої обрані станції</string>
+    <string name="no_stations_found">Нічого не знайдено</string>
+    <string name="recently_played">Нещодавно прослухано</string>
 </resources>
