@@ -262,7 +262,6 @@ class MainActivity : ComponentActivity() {
         val uiState by viewModel.uiState.collectAsState()
 
         Scaffold(
-            containerColor = Color.Transparent,
             topBar = {
                 Column {
                     TopAppBar(
