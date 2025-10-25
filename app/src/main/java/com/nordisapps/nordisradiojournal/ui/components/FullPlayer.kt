@@ -2,6 +2,7 @@ package com.nordisapps.nordisradiojournal.ui.components
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
@@ -90,28 +91,36 @@ fun FullPlayer(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceAround
+                .padding(bottom = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(
                 modifier = Modifier
-                    .padding(vertical = 12.dp)
+                    .padding(vertical = 16.dp)
                     .width(40.dp)
                     .height(4.dp)
                     .clip(RoundedCornerShape(2.dp))
                     .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
             )
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 if (station.icon != null) {
                     SubcomposeAsyncImage(
                         model = station.icon,
                         imageLoader = imageLoader,
                         contentDescription = station.name,
-                        contentScale = ContentScale.Crop,
+                        contentScale = ContentScale.Fit,
                         modifier = Modifier
                             .size(240.dp)
                             .clip(RoundedCornerShape(16.dp))
+                            .border(
+                                width = 1.dp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                                shape = RoundedCornerShape(16.dp)
+                            )
                     )
 
                     Spacer(modifier = Modifier.height(32.dp))
@@ -142,9 +151,12 @@ fun FullPlayer(
                     }
                 }
             }
+            Spacer(modifier = Modifier.weight(1f))
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Spacer(modifier = Modifier.width(24.dp))
