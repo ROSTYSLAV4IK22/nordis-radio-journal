@@ -157,8 +157,9 @@ fun RadioStationItem(
                             Icon(
                                 imageVector = Icons.Default.PlayArrow,
                                 contentDescription = null,
-                                modifier = Modifier.size(ButtonDefaults.IconSpacing)
+                                modifier = Modifier.size(ButtonDefaults.IconSize)
                             )
+                            Spacer(Modifier.size(ButtonDefaults.IconSpacing))
                             Text(stringResource(R.string.btn_listen_online))
                         }
                     }
