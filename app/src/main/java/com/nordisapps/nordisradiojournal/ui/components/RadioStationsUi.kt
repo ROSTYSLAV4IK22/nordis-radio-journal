@@ -193,8 +193,21 @@ private fun EnlargedStationIconDialog(
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Fit
                 ) {
-                    if (painter.state is AsyncImagePainter.State.Loading) {
-                        CircularProgressIndicator()
+                    when (painter.state) {
+                        is AsyncImagePainter.State.Loading -> {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                        }
+                        is AsyncImagePainter.State.Error -> {
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = "Error loading image",
+                                modifier = Modifier.size(80.dp),
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                        else -> {
+                            SubcomposeAsyncImageContent()
+                        }
                     }
                 }
             }
