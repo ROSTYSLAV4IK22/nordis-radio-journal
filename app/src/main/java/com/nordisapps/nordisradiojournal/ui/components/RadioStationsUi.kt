@@ -135,27 +135,32 @@ fun RadioStationItem(
             }
 
             AnimatedVisibility(expanded) {
-                Column(
-                    modifier = Modifier
-                        .padding(start = 16.dp, end = 16.dp, top = 8.dp)
-                ) {
-                    Text("${stringResource(R.string.station_location)}: ${location ?: "-"}")
-                    Text("PS: ${ps ?: "-"}")
-                    Text("RT: ${rt ?: "-"}")
+                Column {
+                    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                        Text("${stringResource(R.string.station_location)}: ${location ?: "-"}")
+                        Text("PS: ${ps ?: "-"}")
+                        Text("RT: ${rt ?: "-"}")
+                    }
 
                     Spacer(Modifier.height(8.dp))
 
-                    Button(
-                        onClick = { onListenClick() },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    {
-                        Icon(
-                            imageVector = Icons.Default.PlayArrow,
-                            contentDescription = null,
-                            modifier = Modifier.size(24.dp)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Button(
+                            onClick = { onListenClick() }
                         )
-                        Text(stringResource(R.string.btn_listen_online))
+                        {
+                            Icon(
+                                imageVector = Icons.Default.PlayArrow,
+                                contentDescription = null,
+                                modifier = Modifier.size(ButtonDefaults.IconSpacing)
+                            )
+                            Text(stringResource(R.string.btn_listen_online))
+                        }
                     }
                 }
             }
@@ -174,7 +179,7 @@ fun RadioStationItem(
 @Composable
 private fun EnlargedStationIconDialog(
     iconUrl: String,
-    imageLoader: ImageLoader,onDismiss: () -> Unit
+    imageLoader: ImageLoader, onDismiss: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -197,6 +202,7 @@ private fun EnlargedStationIconDialog(
                         is AsyncImagePainter.State.Loading -> {
                             CircularProgressIndicator(modifier = Modifier.size(24.dp))
                         }
+
                         is AsyncImagePainter.State.Error -> {
                             Icon(
                                 imageVector = Icons.Default.Warning,
@@ -205,6 +211,7 @@ private fun EnlargedStationIconDialog(
                                 tint = MaterialTheme.colorScheme.error
                             )
                         }
+
                         else -> {
                             SubcomposeAsyncImageContent()
                         }
