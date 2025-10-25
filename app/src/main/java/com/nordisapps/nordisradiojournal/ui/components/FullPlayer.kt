@@ -91,20 +91,18 @@ fun FullPlayer(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(horizontal = 24.dp, vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
             Box(
                 modifier = Modifier
-                    .padding(vertical = 16.dp)
                     .width(40.dp)
                     .height(4.dp)
                     .clip(RoundedCornerShape(2.dp))
                     .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
             )
             Column(
-                modifier = Modifier
-                    .padding(horizontal = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 if (station.icon != null) {
@@ -151,11 +149,9 @@ fun FullPlayer(
                     }
                 }
             }
-            Spacer(modifier = Modifier.weight(1f))
             Row(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp),
+                    .fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
