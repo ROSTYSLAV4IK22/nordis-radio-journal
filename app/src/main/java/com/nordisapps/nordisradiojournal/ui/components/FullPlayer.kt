@@ -6,30 +6,14 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PauseCircleFilled
 import androidx.compose.material.icons.filled.PlayCircleFilled
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -60,19 +44,21 @@ fun FullPlayer(
     onDismiss: () -> Unit
 ) {
     val isFavourite = favouriteStations.any { it.id == station.id }
-
     val offsetY = remember { Animatable(0f) }
     val coroutineScope = rememberCoroutineScope()
 
     Card(
         modifier = modifier
             .fillMaxSize()
-            .offset { IntOffset(0, offsetY.value.roundToInt())}
+            .offset { IntOffset(0, offsetY.value.roundToInt()) }
             .draggable(
                 orientation = Orientation.Vertical,
                 state = rememberDraggableState { delta ->
-                    coroutineScope.launch {
-                        offsetY.snapTo(offsetY.value + delta)
+                    // Позволяем тащить только вниз
+                    if (offsetY.value + delta >= 0) {
+                        coroutineScope.launch {
+                            offsetY.snapTo(offsetY.value + delta)
+                        }
                     }
                 },
                 onDragStopped = {
@@ -88,98 +74,103 @@ fun FullPlayer(
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
         elevation = CardDefaults.cardElevation(8.dp)
     ) {
-        Column(
+        // ИСПОЛЬЗУЕМ Box, А НЕ Column, В КАЧЕСТВЕ ГЛАВНОГО КОНТЕЙНЕРА
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp, vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
+                .windowInsetsPadding(WindowInsets.systemBars)
         ) {
+            // "РУЧКА" - прибита к верху Box'а
             Box(
                 modifier = Modifier
-                    .width(40.dp)
-                    .height(4.dp)
-                    .clip(RoundedCornerShape(2.dp))
+                    .align(Alignment.TopCenter)
+                    .padding(top = 12.dp)
+                    .width(60.dp)
+                    .height(6.dp)
+                    .clip(RoundedCornerShape(3.dp))
                     .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
             )
+
+            // ОСНОВНОЙ КОНТЕНТ - находится в Column, который НЕ занимает весь экран
             Column(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .fillMaxWidth()
+                    // Отступы, чтобы контент не наезжал на ручку и кнопки
+                    .padding(horizontal = 24.dp, vertical = 32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                if (station.icon != null) {
-                    SubcomposeAsyncImage(
-                        model = station.icon,
-                        imageLoader = imageLoader,
-                        contentDescription = station.name,
-                        contentScale = ContentScale.Fit,
-                        modifier = Modifier
-                            .size(240.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .border(
-                                width = 1.dp,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-                                shape = RoundedCornerShape(16.dp)
-                            )
-                    )
+                // Адаптивная картинка
+                SubcomposeAsyncImage(
+                    model = station.icon,
+                    imageLoader = imageLoader,
+                    contentDescription = station.name,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .fillMaxWidth(0.7f)
+                        .aspectRatio(1f)
+                        .clip(RoundedCornerShape(16.dp))
+                        .border(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                )
 
-                    Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
+                // Текст
+                Text(
+                    text = station.name ?: "Unknown Station",
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+
+                if (!trackTitle.isNullOrBlank()) {
                     Text(
-                        text = station.name ?: "Unknown Station",
-                        style = MaterialTheme.typography.headlineMedium
+                        text = trackTitle,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        textAlign = TextAlign.Center
                     )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    if (!trackTitle.isNullOrBlank()) {
-                        Text(
-                            text = trackTitle,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                            textAlign = TextAlign.Center
-                        )
-                    } else if (!station.rt.isNullOrBlank() && station.rt != "-") {
-                        Text(
-                            text = station.rt,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
-                    } else {
-                        Spacer(modifier = Modifier.height(24.dp))
-                    }
+                } else if (!station.rt.isNullOrBlank() && station.rt != "-") {
+                    Text(
+                        text = station.rt,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
                 }
             }
+            Spacer(modifier = Modifier.height(42.dp))
+
             Row(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Spacer(modifier = Modifier.width(24.dp))
-
                 SignalStrengthIndicator(bitrate = currentBitrate)
 
-                Spacer(modifier = Modifier.width(16.dp))
-
-                IconButton(onClick = onPlayPauseClick) {
+                IconButton(
+                    onClick = onPlayPauseClick,
+                    modifier = Modifier.size(96.dp)
+                ) {
                     Icon(
                         imageVector = if (isPlaying) Icons.Default.PauseCircleFilled else Icons.Default.PlayCircleFilled,
-                        contentDescription = null,
-                        modifier = Modifier.size(80.dp)
+                        contentDescription = null
                     )
                 }
-
-                Spacer(modifier = Modifier.width(16.dp))
-
-                IconButton(onClick = onToggleFavourite) {
+                IconButton(
+                    onClick = onToggleFavourite,
+                    modifier = Modifier.size(56.dp)
+                ) {
                     Icon(
                         imageVector = if (isFavourite) Icons.Filled.Star else Icons.Default.StarBorder,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(36.dp)
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
-                Spacer(modifier = Modifier.width(24.dp))
             }
         }
     }
