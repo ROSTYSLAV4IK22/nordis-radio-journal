@@ -135,6 +135,7 @@ fun RadioStationItem(
             }
 
             AnimatedVisibility(expanded) {
+                HorizontalDivider()
                 Column {
                     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                         Text("${stringResource(R.string.station_location)}: ${location ?: "-"}")
@@ -160,7 +161,10 @@ fun RadioStationItem(
                                 modifier = Modifier.size(ButtonDefaults.IconSize)
                             )
                             Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                            Text(stringResource(R.string.btn_listen_online))
+                            Text(
+                                text = stringResource(R.string.btn_listen_online),
+                                style = MaterialTheme.typography.labelLarge
+                            )
                         }
                     }
                 }
@@ -172,7 +176,7 @@ fun RadioStationItem(
         EnlargedStationIconDialog(
             iconUrl = icon,
             imageLoader = imageLoader,
-            onDismiss = { showImageDialog = false }
+            onDismiss = {}
         )
     }
 }
