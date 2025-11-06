@@ -4,6 +4,7 @@ import com.google.firebase.database.FirebaseDatabase
 
 data class Station(
     val id: String? = null,
+    val displayId: Int? = null,
     val name: String? = null,
     val freq: String? = null,
     val ps: String? = null,
