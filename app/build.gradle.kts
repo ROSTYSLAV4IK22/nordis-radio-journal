@@ -71,6 +71,7 @@ dependencies {
     implementation(libs.androidx.paging.compose)
     implementation(libs.androidx.paging.runtime)
     implementation(libs.androidx.paging.runtime.ktx)
+    implementation(libs.androidx.media3.session)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
