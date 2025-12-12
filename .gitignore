@@ -2,6 +2,8 @@
 .gradle/
 build/
 */build/
+app/build/
+app/release/
 
 # Local configuration
 local.properties
