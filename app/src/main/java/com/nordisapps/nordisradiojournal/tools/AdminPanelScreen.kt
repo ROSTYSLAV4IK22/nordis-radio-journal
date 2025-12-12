@@ -1,3 +1,5 @@
+@file:Suppress("AssignedValueIsNeverRead")
+
 package com.nordisapps.nordisradiojournal.tools
 
 import androidx.compose.animation.AnimatedVisibility
@@ -28,8 +30,9 @@ import coil.compose.AsyncImage
 import com.nordisapps.nordisradiojournal.Station
 import com.nordisapps.nordisradiojournal.UiState
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
+import kotlin.math.abs
 
+private const val FAB_SCROLL_THRESHOLD = 50
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminPanelScreen(
@@ -44,11 +47,19 @@ fun AdminPanelScreen(
     var isFabVisible by remember { mutableStateOf(true) }
 
     LaunchedEffect(listState) {
-        snapshotFlow { listState.firstVisibleItemScrollOffset }
-            .map { it > 0 } // Проверяем, сдвинулся ли список с самого верха
-            .distinctUntilChanged() // Реагируем только на реальное изменение направления
-            .collect { isScrollingDown ->
-                isFabVisible = !isScrollingDown
+        var previousScrollOffset = 0
+
+        snapshotFlow {
+            listState.firstVisibleItemIndex * 10_000 +
+                    listState.firstVisibleItemScrollOffset
+        }
+            .distinctUntilChanged()
+            .collect { currentOffset ->
+                val delta = currentOffset - previousScrollOffset
+                if (abs(delta) > FAB_SCROLL_THRESHOLD) {
+                    isFabVisible = delta < 0
+                }
+                previousScrollOffset = currentOffset
             }
     }
 
@@ -143,7 +154,7 @@ private fun AdminStationItem(
                     Text(station.name ?: "No Name", style = MaterialTheme.typography.titleMedium)
                     // Отображаем ID, так как это важно для администрирования
                     Text(
-                        station.id ?: "No ID",
+                        station.displayId?.toString() ?: "The display ID is not set",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.outline
                     )
@@ -171,6 +182,7 @@ private fun AdminStationItem(
                     HorizontalDivider(modifier = Modifier.padding(bottom = 8.dp)) // Разделитель
 
                     // Выводим все поля станции с подписями
+                    InfoRow("Firebase ID:", station.id)
                     InfoRow("Icon URL:", station.icon)
                     InfoRow("Stream URL:", station.stream)
                     InfoRow("Frequency:", station.freq)

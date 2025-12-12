@@ -32,6 +32,7 @@
     <string name="language">Language</string>
     <string name="select_language">Select a language</string>
     <string name="profile">Profile</string>
+    <string name="admin_button">Admin Panel</string>
     <string name="welcome_message">Hello, %1$s!</string>
     <string name="sign_in_error">Sign in error: %1$s</string>
     <string name="signed_out_message">You have been signed out</string>

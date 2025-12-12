@@ -1,6 +1,8 @@
 package com.nordisapps.nordisradiojournal
 
+import android.util.Log
 import com.google.firebase.database.FirebaseDatabase
+import kotlinx.coroutines.tasks.await
 
 data class Station(
     val id: String? = null,
@@ -20,12 +22,18 @@ data class Station(
 val database = FirebaseDatabase.getInstance()
 val stationsRef = database.getReference("stations")
 
-fun loadStations(onLoaded: (List<Station>) -> Unit) {
-    stationsRef.get().addOnSuccessListener { snapshot ->
+suspend fun loadStations(): List<Station> {
+    return try {
+        // Используем .await() для ожидания результата без блокировки потока
+        val snapshot = stationsRef.get().await()
+
         val stations = snapshot.children.mapNotNull { child ->
             val station = child.getValue(Station::class.java)
             station?.copy(id = child.key)
         }
-        onLoaded(stations)
+        stations.sortedBy { it.displayId }
+    } catch (e: Exception) {
+        Log.e("RadioStations", "Error loading stations from Firebase", e)
+        emptyList()
     }
 }

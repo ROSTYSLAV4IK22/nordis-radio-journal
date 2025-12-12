@@ -40,6 +40,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -67,6 +68,7 @@ fun MainScreen(
     selectedTab: Int
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val isLoading = uiState.isLoading
     val searchQuery by viewModel.searchQuery.collectAsState()
     var isSearchFocused by rememberSaveable { mutableStateOf(false) }
 
@@ -147,39 +149,52 @@ fun MainScreen(
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        items(stations.take(5)) { station ->
-                            Card(
-                                modifier = Modifier
-                                    .width(120.dp)
-                                    .height(140.dp),
-                                onClick = { viewModel.playStation(station) }
-                            ) {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(12.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.Center
-                                ) {
-                                    SubcomposeAsyncImage(
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(140.dp), // Та же высота, что и у ваших карточек (Card)
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (uiState.isLoading) {
+                            // Если данные грузятся, показываем круговой индикатор
+                            CircularProgressIndicator()
+                        } else {
+                            // Если загрузка завершена, показываем список станций
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                items(stations.take(5)) { station ->
+                                    Card(
                                         modifier = Modifier
-                                            .size(64.dp)
-                                            .weight(1f, fill = false),
-                                        contentScale = ContentScale.Fit,
-                                        model = station.icon ?: "",
-                                        imageLoader = imageLoader,
-                                        contentDescription = station.name
-                                    )
-                                    Spacer(Modifier.height(8.dp))
-                                    Text(
-                                        text = station.name ?: "",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        textAlign = TextAlign.Center,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis,
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
+                                            .width(120.dp)
+                                            .height(140.dp),
+                                        onClick = { viewModel.playStation(station) }
+                                    ) {
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .padding(12.dp),
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.Center
+                                        ) {
+                                            SubcomposeAsyncImage(
+                                                modifier = Modifier
+                                                    .size(64.dp)
+                                                    .weight(1f, fill = false),
+                                                contentScale = ContentScale.Fit,
+                                                model = station.icon ?: "",
+                                                imageLoader = imageLoader,
+                                                contentDescription = station.name
+                                            )
+                                            Spacer(Modifier.height(8.dp))
+                                            Text(
+                                                text = station.name ?: "",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                textAlign = TextAlign.Center,
+                                                maxLines = 2,
+                                                overflow = TextOverflow.Ellipsis,
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }

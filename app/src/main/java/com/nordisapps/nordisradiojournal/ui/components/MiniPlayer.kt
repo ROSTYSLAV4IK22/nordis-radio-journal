@@ -1,3 +1,5 @@
+@file:Suppress("ConvertTwoComparisonsToRangeCheck")
+
 package com.nordisapps.nordisradiojournal.ui.components
 
 import androidx.compose.animation.core.Animatable
@@ -122,8 +124,9 @@ fun MiniPlayer(
                         val animationOffset = remember { Animatable(0f) }
 
                         LaunchedEffect(trackTitle, containerWidth, textWidth) {
-                            if (textWidth > containerWidth && containerWidth > 0) {
+                            if (containerWidth > 0 && textWidth > containerWidth) {
                                 val scrollDistance = (textWidth - containerWidth).toFloat() + 100f
+                                animationOffset.stop()
                                 animationOffset.animateTo(
                                     targetValue = scrollDistance,
                                     animationSpec = infiniteRepeatable(

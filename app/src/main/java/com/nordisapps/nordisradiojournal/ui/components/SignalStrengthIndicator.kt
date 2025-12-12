@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -33,8 +34,8 @@ fun SignalStrengthIndicator(
             val isActive = isBarActive(index, bitrate)
 
             val color by animateColorAsState(
-                targetValue = if (isActive) getColorForBitrate(bitrate) else Color.Gray.copy(alpha = 0.3f),
-                animationSpec = tween(durationMillis = 500),
+                targetValue = if (isActive) getColorForBitrate(bitrate) else MaterialTheme.colorScheme.surfaceVariant,
+                animationSpec = tween(durationMillis = 300),
                 label = "SignalBarColor"
             )
 
@@ -56,7 +57,7 @@ private fun isBarActive(index: Int, bitrate: Int?): Boolean {
         0 -> currentBitrate >= 32
         1 -> currentBitrate >= 64
         2 -> currentBitrate >= 128
-        3 -> currentBitrate >= 256
+        3 -> currentBitrate >= 192
         else -> false
     }
 }
@@ -65,8 +66,8 @@ private fun isBarActive(index: Int, bitrate: Int?): Boolean {
 private fun getColorForBitrate(bitrate: Int?): Color {
     return when (bitrate ?: 0) {
         in 0..63 -> Color(0xFFD32F2F)   // Красный (плохое качество)
-        in 64..127 -> Color(0xFFFBC02D)  // Желтый (среднее)
-        in 128..255 -> Color(0xFF388E3C)  // Зеленый (хорошее)
+        in 64..127 -> Color(0xFFFF9800)
+        in 128..191 -> Color(0xFF388E3C)  // Зеленый (хорошее)
         else -> Color(0xFF1976D2)        // Синий (отличное)
     }
 }

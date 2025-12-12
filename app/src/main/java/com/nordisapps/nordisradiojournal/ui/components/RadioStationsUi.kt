@@ -1,3 +1,5 @@
+@file:Suppress("AssignedValueIsNeverRead")
+
 package com.nordisapps.nordisradiojournal.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
@@ -176,7 +178,7 @@ fun RadioStationItem(
         EnlargedStationIconDialog(
             iconUrl = icon,
             imageLoader = imageLoader,
-            onDismiss = {}
+            onDismiss = { showImageDialog = false }
         )
     }
 }

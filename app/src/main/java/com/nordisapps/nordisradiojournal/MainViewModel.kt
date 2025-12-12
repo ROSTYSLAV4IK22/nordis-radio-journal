@@ -1,18 +1,18 @@
 package com.nordisapps.nordisradiojournal
 
 import android.app.Application
+import android.content.ComponentName
+import android.content.Intent
+import android.util.Log
 import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.datasource.DefaultHttpDataSource
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.analytics.AnalyticsListener
-import androidx.media3.exoplayer.source.ProgressiveMediaSource
-import androidx.media3.extractor.metadata.icy.IcyInfo
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
+import com.google.common.util.concurrent.MoreExecutors
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.getValue
@@ -20,11 +20,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.collections.emptyList
-import kotlin.collections.emptySet
+import kotlinx.coroutines.delay
+import com.nordisapps.nordisradiojournal.loadStations as fetchStationsFromNetwork
 
 @Suppress("OPT_IN_ARGUMENT_IS_NOT_MARKER")
 @UnstableApi
@@ -53,6 +55,61 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _selectedCity = MutableStateFlow<String?>(null)
     val selectedCity: StateFlow<String?> = _selectedCity
 
+    private suspend fun ensureMediaControllerReady() {
+        if (mediaController == null) {
+            initializeMediaController()
+
+            // ждём подключения
+            var attempts = 0
+            while (mediaController == null && attempts < 20) {
+                attempts++
+                delay(50) // ждём 50 мс
+            }
+
+            if (mediaController == null) {
+                Log.e("MediaController", "Controller failed to initialize in time")
+            }
+        }
+    }
+
+    private val authStateListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
+        val user = firebaseAuth.currentUser
+        if (user != null) {
+            // Пользователь вошел в систему (или сессия восстановлена)
+            Log.d("AUTH", "AuthStateListener: User is signed in. UID: ${user.uid}")
+            _uiState.update { it.copy(isUserLoggedIn = true) }
+            loadUserSpecificData()
+        } else {
+            // Пользователь вышел
+            Log.d("AUTH", "AuthStateListener: User is signed out.")
+            _uiState.update {
+                it.copy(
+                    isUserLoggedIn = false,
+                    isUserAdmin = false
+                )
+            }
+        }
+    }
+
+    private fun checkAdminStatus() {
+        val user = FirebaseAuth.getInstance().currentUser
+        if (user == null) {
+            _uiState.value = _uiState.value.copy(isUserAdmin = false)
+            return
+        }
+        val dbRef = FirebaseDatabase.getInstance().getReference("admins")
+        dbRef.get().addOnSuccessListener { snapshot ->
+            val adminUids = snapshot.children.map { it.value.toString() }
+            val isAdmin = user.uid in adminUids
+            _uiState.value = _uiState.value.copy(isUserAdmin = isAdmin)
+            if (isAdmin) {
+                Log.d("AUTH", "Admin status confirmed for user ${user.uid}")
+            }
+        }.addOnFailureListener {
+            _uiState.value = _uiState.value.copy(isUserAdmin = false)
+        }
+    }
+
     fun setSearchQuery(query: String) {
         _searchQuery.value = query
     }
@@ -72,81 +129,111 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _selectedCountry,
         _selectedCity
     ) { stations, query, country, city ->
+        val tokens = query
+            .trim()
+            .lowercase()
+            .split("\\s+".toRegex())
+            .filter { it.isNotBlank() }
         stations.filter { station ->
-            val matchesQuery = query.isBlank() ||
-                    station.name?.contains(query, ignoreCase = true) == true ||
-                    station.stationCity?.contains(query, ignoreCase = true) == true
-            val matchesCountry =
-                country.isNullOrBlank() || station.country?.equals (country, ignoreCase = true) == true
+            val name = station.name?.lowercase().orEmpty()
+            val cityName = station.stationCity?.lowercase().orEmpty()
+            val mainCity = station.mainCity?.lowercase().orEmpty()
+            val countryName = station.country?.lowercase().orEmpty()
+            val matchesQuery = tokens.isEmpty() || tokens.all { token ->
+                name.contains(token) ||
+                        cityName.contains(token) ||
+                        mainCity.contains(token) ||
+                        countryName.contains(token)
+            }
+            val matchesCountry = country.isNullOrBlank() || station.country?.equals(
+                country,
+                ignoreCase = true
+            ) == true
             val matchesCity =
-                city.isNullOrBlank() || station.mainCity?.equals (city, ignoreCase = true) == true
+                city.isNullOrBlank() || station.mainCity?.equals(city, ignoreCase = true) == true
 
             matchesQuery && matchesCountry && matchesCity
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val exoPlayer: ExoPlayer = ExoPlayer.Builder(application).build()
-
-    private val listener = object : Player.Listener {
-        override fun onIsPlayingChanged(isPlaying: Boolean) {
-            _uiState.value = _uiState.value.copy(isPlaying = isPlaying)
-        }
-
-        override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
-            val trackInfo = mediaMetadata.title?.toString()
-                ?: mediaMetadata.artist?.toString()
-                ?: mediaMetadata.displayTitle?.toString()
-
-            if (!trackInfo.isNullOrEmpty()) {
-                _uiState.value = _uiState.value.copy(currentTrackTitle = trackInfo)
-            }
-        }
-
-        override fun onMetadata(metadata: androidx.media3.common.Metadata) {
-            for (i in 0 until metadata.length()) {
-                val entry = metadata.get(i)
-                if (entry is IcyInfo) {
-                    _uiState.value = _uiState.value.copy(currentTrackTitle = entry.title)
-                }
-            }
-        }
-    }
-
-    private val analyticsListener = object :
-        AnalyticsListener {
-        override fun onBandwidthEstimate(
-            eventTime: AnalyticsListener.EventTime,
-            totalLoadTimeMs: Int,
-            totalBytesLoaded: Long,
-            bitrateEstimate: Long // <--- ВОТ НАШ БИТРЕЙТ!
-        ) {
-            // bitrateEstimate - это битрейт в битах в секунду.
-            // Он может быть 0, если данных еще нет.
-            if (bitrateEstimate > 0) {
-                // Переводим в килобиты для удобства
-                val bitrateKbps = (bitrateEstimate / 1000).toInt()
-
-                // Обновляем UiState, только если значение изменилось,
-                // чтобы избежать лишних рекомпозиций.
-                if (_uiState.value.currentBitrate != bitrateKbps) {
-                    _uiState.value = _uiState.value.copy(currentBitrate = bitrateKbps)
-                }
-            }
-        }
-    }
+    private var mediaController: MediaController? = null
 
     init {
-        exoPlayer.addListener(listener)
-        exoPlayer.addAnalyticsListener(analyticsListener)
+        FirebaseAuth.getInstance().addAuthStateListener(authStateListener)
         loadStations()
+
+        FirebaseAuth.getInstance().currentUser?.let {
+            checkAdminStatus()
+        }
+    }
+
+    private fun initializeMediaController() {
+        viewModelScope.launch {
+            try {
+                val sessionToken = SessionToken(
+                    context,
+                    ComponentName(context, RadioService::class.java)
+                )
+
+                val controllerFuture = MediaController.Builder(context, sessionToken).buildAsync()
+                controllerFuture.addListener({
+                    try {
+                        mediaController = controllerFuture.get()
+
+                        // Слушаем изменения плеера из сервиса
+                        mediaController?.addListener(object : Player.Listener {
+                            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                                _uiState.value = _uiState.value.copy(isPlaying = isPlaying)
+                            }
+
+                            override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
+                                val trackInfo = mediaMetadata.title?.toString()
+                                    ?: mediaMetadata.artist?.toString()
+                                    ?: mediaMetadata.displayTitle?.toString()
+
+                                if (!trackInfo.isNullOrEmpty()) {
+                                    _uiState.value =
+                                        _uiState.value.copy(currentTrackTitle = trackInfo)
+                                }
+                            }
+                        })
+
+                        Log.d("MediaController", "Successfully connected to RadioService")
+                    } catch (e: Exception) {
+                        Log.e("MediaController", "Failed to get controller", e)
+                    }
+                }, MoreExecutors.directExecutor())
+            } catch (e: Exception) {
+                Log.e("MediaController", "Failed to initialize MediaController", e)
+            }
+        }
     }
 
     private fun loadStations() {
         viewModelScope.launch {
-            loadStations { loadedStations ->
-                _uiState.value = _uiState.value.copy(stations = loadedStations)
-                loadFavourites()
+            try {
+                // Устанавливаем флаг загрузки
+                _uiState.update { it.copy(isLoading = true) }
+
+                // Загружаем станции с помощью suspend-функции
+                val stationList = fetchStationsFromNetwork()
+
+                // Обновляем состояние со списком станций
+                _uiState.update {
+                    it.copy(stations = stationList)
+                }
+
+                // Загружаем данные, которые зависят от списка станций
                 loadRecentlyPlayed()
+            } catch (e: Exception) {
+                Log.e("MainViewModel", "Error loading stations", e)
+                // Здесь можно обработать ошибку, например, показать сообщение пользователю
+            } finally {
+                // ВАЖНО: Вне зависимости от успеха или ошибки, выключаем индикатор загрузки
+                _uiState.update { it.copy(isLoading = false) }
+            }
+            FirebaseAuth.getInstance().currentUser?.let {
+                checkAdminStatus()
             }
         }
     }
@@ -176,63 +263,82 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun loadRecentlyPlayed() {
         viewModelScope.launch {
-            context.dataStore.data.collect { preferences ->
-                val historyString = preferences[RECENTLY_PLAYED_KEY] ?: ""
-                if (historyString.isNotEmpty()) {
-                    val historyIds = historyString.split(",")
-                    val historyStations = historyIds.mapNotNull { id ->
-                        _uiState.value.stations.find { it.id == id }
-                    }
-                    _uiState.value = _uiState.value.copy(recentlyPlayedStations = historyStations)
+            val preferences = context.dataStore.data.first()
+            val historyString = preferences[RECENTLY_PLAYED_KEY] ?: ""
+            if (historyString.isNotEmpty()) {
+                val historyIds = historyString.split(",")
+                val historyStations = historyIds.mapNotNull { id ->
+                    _uiState.value.stations.find { it.id == id }
                 }
+                _uiState.value = _uiState.value.copy(recentlyPlayedStations = historyStations)
             }
         }
     }
 
+    private fun loadUserSpecificData() {
+        loadFavourites()
+        checkAdminStatus()
+    }
+
     fun playStation(station: Station) {
-        val stream = station.stream ?: return
-        val dataSourceFactory = DefaultHttpDataSource.Factory()
-            .setUserAgent("NordisRadioJournal/1.0 (Android)")
-        val mediaSource = ProgressiveMediaSource.Factory(dataSourceFactory)
-            .createMediaSource(MediaItem.fromUri(stream))
+        viewModelScope.launch {
 
-        exoPlayer.setMediaSource(mediaSource)
-        exoPlayer.prepare()
-        exoPlayer.play()
+            val intent = Intent(context, RadioService::class.java).apply {
+                action = RadioService.ACTION_PLAY
+                putExtra(RadioService.EXTRA_STREAM_URL, station.stream)
+                putExtra(RadioService.EXTRA_STATION_NAME, station.name)
+                putExtra(RadioService.EXTRA_STATION_ICON, station.icon)
+            }
 
-        _uiState.value = _uiState.value.copy(
-            currentStation = station,
-            isPlaying = true
-        )
-        addStationToHistory(station)
+            context.startService(intent)
+
+            ensureMediaControllerReady()
+
+            _uiState.update {
+                it.copy(
+                    currentStation = station,
+                    currentTrackTitle = null,
+                    isPlaying = true
+                )
+            }
+
+            addStationToHistory(station)
+        }
     }
 
     fun togglePlayPause() {
-        if (exoPlayer.isPlaying) {
-            exoPlayer.pause()
-        } else {
-            exoPlayer.play()
+        mediaController?.let { controller ->
+            if (controller.isPlaying) {
+                controller.pause()
+            } else {
+                controller.play()
+            }
         }
     }
 
     fun closePlayer() {
-        exoPlayer.stop()
+        val intent = Intent(context, RadioService::class.java).apply {
+            action = RadioService.ACTION_STOP
+        }
+        context.startService(intent)
+
         _uiState.value = _uiState.value.copy(
             currentStation = null,
             currentTrackTitle = null,
-            isPlaying = false
+            isPlaying = false,
+            currentBitrate = null
         )
     }
 
     override fun onCleared() {
         super.onCleared()
-        exoPlayer.removeListener(listener)
-        exoPlayer.removeAnalyticsListener(analyticsListener)
-        exoPlayer.release()
+        FirebaseAuth.getInstance().removeAuthStateListener(authStateListener)
+        mediaController?.release()
+        mediaController = null
     }
 
     fun onUserChanged() {
-        loadFavourites()
+        loadUserSpecificData()
     }
 
     fun toggleFavourite(station: Station) {
@@ -277,12 +383,65 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         _uiState.value = _uiState.value.copy(favouriteStations = favStations)
                     }
             } else {
-                context.dataStore.data.collect { preferences ->
-                    val favoriteIds = preferences[FAVORITE_STATIONS_KEY] ?: emptySet()
-                    val favStations = _uiState.value.stations.filter { it.id in favoriteIds }
-                    _uiState.value = _uiState.value.copy(favouriteStations = favStations)
-                }
+                val preferences = context.dataStore.data.first()
+                val favoriteIds = preferences[FAVORITE_STATIONS_KEY] ?: emptySet()
+                val favStations = _uiState.value.stations.filter { it.id in favoriteIds }
+                _uiState.value = _uiState.value.copy(favouriteStations = favStations)
             }
         }
+    }
+
+    fun deleteStation(station: Station, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
+        val stationId = station.id
+        if (stationId.isNullOrEmpty()) {
+            onFailure(Exception("Cannot delete station with empty ID"))
+            return
+        }
+        val dbRef = FirebaseDatabase.getInstance().getReference("stations")
+        dbRef.child(stationId).removeValue()
+            .addOnSuccessListener {
+                Log.d("ADMIN", "Station deleted from Firebase: $stationId")
+                val updateStations = _uiState.value.stations.filterNot { it.id == stationId }
+                _uiState.value = _uiState.value.copy(stations = updateStations)
+                onSuccess()
+            }
+            .addOnFailureListener { error ->
+                Log.e("ADMIN", "Failed to delete station: ${error.message}")
+                onFailure(error)
+            }
+
+    }
+
+    fun saveStation(station: Station, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
+        val dbref = FirebaseDatabase.getInstance().getReference("stations")
+        val stationId = station.id
+
+        if (stationId.isNullOrEmpty()) {
+            dbref.get().addOnSuccessListener { snapshot ->
+                val stations = snapshot.children.mapNotNull { it.getValue(Station::class.java) }
+                val maxDisplayId = stations.maxOfOrNull { it.displayId ?: 0 } ?: 0
+                val newDisplayId = maxDisplayId + 1
+
+                val newStationRef = dbref.push()
+                val newStation = station.copy(
+                    id = newStationRef.key,
+                    displayId = newDisplayId
+                )
+
+                newStationRef.setValue(newStation)
+                    .addOnSuccessListener {
+                        Log.d("ADMIN", "Station created with displayId $newDisplayId")
+                        loadStations()
+                        onSuccess()
+                    }
+            }.addOnFailureListener { error -> onFailure(error) }
+        } else {
+            dbref.child(stationId).setValue(station)
+                .addOnSuccessListener {
+                    Log.d("ADMIN", "Station data saved successfully")
+                    loadStations()
+                    onSuccess()
+                }
+        }.addOnFailureListener { error -> onFailure(error) }
     }
 }

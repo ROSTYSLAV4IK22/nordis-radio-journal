@@ -165,6 +165,7 @@ class RadioService : MediaSessionService() {
     }
 
     private fun playStream(url: String, name: String, iconUrl: String?) {
+        reconnectAttempts = 0
         val mediaItem = MediaItem.Builder()
             .setUri(url)
             .setMediaMetadata(
