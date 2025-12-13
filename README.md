@@ -1,8 +1,8 @@
 # 📻 Nordis Radio Journal
-![Kotlin](https://img.shields.io/badge/Kotlin-1.9+-purple?logo=kotlin)
-![Platform](https://img.shields.io/badge/Platform-Android-green)
-![License](https://img.shields.io/badge/License-MIT-blue)
 ![Status](https://img.shields.io/badge/Status-Active%20Development-orange)
+![Platform](https://img.shields.io/badge/Platform-Android-green?logo=android&logoColor=white)
+![Kotlin](https://img.shields.io/badge/Kotlin-2.x-7F52FF?logo=kotlin&logoColor=white)
+![License](https://img.shields.io/github/license/ROSTYSLAV4IK22/nordis-radio-journal?label=License&color=blue&logo=github)
 
 -------------------------------------------------------------------------
 
