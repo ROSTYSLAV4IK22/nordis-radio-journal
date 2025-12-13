@@ -1,3 +1,5 @@
+@file:Suppress("AssignedValueIsNeverRead")
+
 package com.nordisapps.nordisradiojournal
 
 import androidx.compose.foundation.layout.Column
@@ -131,7 +133,6 @@ fun MainScreen(
     val selectedCityKey by viewModel.selectedCity.collectAsState()
     var expandedCity by remember { mutableStateOf(false) }
 
-    // 🟢 BackHandler для выхода из поиска
     val focusManager = LocalFocusManager.current
     BackHandler(enabled = isSearchFocused || searchQuery.isNotEmpty()) {
         focusManager.clearFocus(force = true)
@@ -141,7 +142,6 @@ fun MainScreen(
     Column(modifier = Modifier.fillMaxSize()) {
         when (selectedTab) {
 
-            // 🏠 Главная
             0 -> {
                 Column(Modifier.padding(16.dp)) {
                     Text(
@@ -152,14 +152,12 @@ fun MainScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(140.dp), // Та же высота, что и у ваших карточек (Card)
+                            .height(140.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        if (uiState.isLoading) {
-                            // Если данные грузятся, показываем круговой индикатор
+                        if (isLoading) {
                             CircularProgressIndicator()
                         } else {
-                            // Если загрузка завершена, показываем список станций
                             LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                 items(stations.take(5)) { station ->
                                     Card(
@@ -202,7 +200,6 @@ fun MainScreen(
                 }
             }
 
-            // 🔍 Поиск
             1 -> {
                 Column(
                     modifier = Modifier
@@ -241,7 +238,6 @@ fun MainScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            // страна
                             ExposedDropdownMenuBox(
                                 expanded = expandedCountry,
                                 onExpandedChange = { expandedCountry = it },
@@ -266,9 +262,9 @@ fun MainScreen(
                                 ) {
                                     countries.forEach { countryItem ->
                                         DropdownMenuItem(
-                                            text = { Text(countryItem.displayName) }, // Показываем переведенное имя
+                                            text = { Text(countryItem.displayName) },
                                             onClick = {
-                                                viewModel.setSelectedCountry(countryItem.key) // Сохраняем непереводимый ключ
+                                                viewModel.setSelectedCountry(countryItem.key)
                                                 viewModel.setSelectedCity(null)
                                                 expandedCountry = false
                                             }
@@ -277,7 +273,6 @@ fun MainScreen(
                                 }
                             }
 
-                            // город
                             if (selectedCountryKey != null) {
                                 ExposedDropdownMenuBox(
                                     expanded = expandedCity,
@@ -302,9 +297,9 @@ fun MainScreen(
                                     ) {
                                         cities.forEach { cityItem ->
                                             DropdownMenuItem(
-                                                text = { Text(cityItem.displayName) }, // Показываем переведенное имя
+                                                text = { Text(cityItem.displayName) },
                                                 onClick = {
-                                                    viewModel.setSelectedCity(cityItem.key) // Сохраняем непереводимый ключ
+                                                    viewModel.setSelectedCity(cityItem.key)
                                                     expandedCity = false
                                                 }
                                             )
@@ -368,7 +363,6 @@ fun MainScreen(
                 }
             }
 
-            // ⭐ Избранное
             2 -> {
                 if (favourites.isEmpty()) {
                     Box(
@@ -419,7 +413,6 @@ fun MainScreen(
                 }
             }
 
-            // 🎧 Слушать
             3 -> {
                 val recentlyPlayed = uiState.recentlyPlayedStations
 
