@@ -65,26 +65,9 @@ class RadioService : MediaSessionService() {
 
             override fun onMetadata(metadata: Metadata) {
                 for (i in 0 until metadata.length()) {
-                    val entry = metadata.get(i)
+                    val entry = metadata[i]
                     if (entry is IcyInfo) {
-                        val title = entry.title
-                        if (!title.isNullOrEmpty()) {
-                            // Обновляем метаданные плеера
-                            val currentMetadata = player.mediaMetadata
-                            val updatedMetadata = currentMetadata.buildUpon()
-                                .setTitle(title)
-                                .build()
-
-                            val currentItem = player.currentMediaItem ?: return
-
-                            val newItem = currentItem.buildUpon()
-                                .setMediaMetadata(updatedMetadata)
-                                .build()
-
-                            player.setMediaItem(newItem, false)
-
-                            Log.d("RadioService", "ICY metadata: $title")
-                        }
+                        Log.d("RadioService", "ICY: ${entry.title}")
                     }
                 }
             }
@@ -161,7 +144,7 @@ class RadioService : MediaSessionService() {
             }
         }
 
-        return START_STICKY
+        return super.onStartCommand(intent, flags, startId)
     }
 
     private fun playStream(url: String, name: String, iconUrl: String?) {
@@ -170,7 +153,7 @@ class RadioService : MediaSessionService() {
             .setUri(url)
             .setMediaMetadata(
                 MediaMetadata.Builder()
-                    .setTitle(name)
+                    .setArtist(name)
                     .setArtworkUri(iconUrl?.toUri())
                     .build()
             )
