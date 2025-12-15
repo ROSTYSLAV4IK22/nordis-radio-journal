@@ -1,8 +1,11 @@
 package com.nordisapps.nordisradiojournal
 
 import android.app.Application
+import android.content.BroadcastReceiver
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.util.Log
 import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.AndroidViewModel
@@ -54,6 +57,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _selectedCity = MutableStateFlow<String?>(null)
     val selectedCity: StateFlow<String?> = _selectedCity
+
+    private val bitrateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action == "com.nordisapps.BITRATE_UPDATE") {
+                val bitrate = intent.getIntExtra("bitrate", 0)
+
+                _uiState.update {
+                    it.copy(currentBitrate = bitrate)
+                }
+            }
+        }
+    }
 
     private suspend fun ensureMediaControllerReady() {
         if (mediaController == null) {
@@ -165,6 +180,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         FirebaseAuth.getInstance().currentUser?.let {
             checkAdminStatus()
         }
+        context.registerReceiver(
+            bitrateReceiver,
+            IntentFilter("com.nordisapps.BITRATE_UPDATE"),
+            Context.RECEIVER_NOT_EXPORTED
+        )
     }
 
     private fun initializeMediaController() {
@@ -180,7 +200,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     try {
                         mediaController = controllerFuture.get()
 
-                        // Слушаем изменения плеера из сервиса
                         mediaController?.addListener(object : Player.Listener {
                             override fun onIsPlayingChanged(isPlaying: Boolean) {
                                 _uiState.value = _uiState.value.copy(isPlaying = isPlaying)
@@ -331,6 +350,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     override fun onCleared() {
+        context.unregisterReceiver(bitrateReceiver)
         super.onCleared()
         FirebaseAuth.getInstance().removeAuthStateListener(authStateListener)
         mediaController?.release()
