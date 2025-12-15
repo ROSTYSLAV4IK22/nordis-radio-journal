@@ -9,6 +9,6 @@ data class UiState(
     val currentBitrate: Int? = null,
     val recentlyPlayedStations: List<Station> = emptyList(),
     val favouriteStations: List<Station> = emptyList(),
-    val isUserAdmin: Boolean = false,
+    val isUserAdmin: Boolean? = null,
     val isUserLoggedIn: Boolean = false
 )

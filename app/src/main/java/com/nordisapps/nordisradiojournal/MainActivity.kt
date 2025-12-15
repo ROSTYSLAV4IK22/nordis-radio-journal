@@ -410,7 +410,7 @@ Box(modifier = Modifier.fillMaxSize()) {
                                             )
                                             HorizontalDivider()
                                         }
-                                        if (uiState.isUserAdmin) {
+                                        if (uiState.isUserAdmin == true) {
                                             DropdownMenuItem(
                                                 text = { Text(context.getString(R.string.admin_button)) },
                                                 onClick = {

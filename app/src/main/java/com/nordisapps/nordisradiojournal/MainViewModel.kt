@@ -74,11 +74,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (mediaController == null) {
             initializeMediaController()
 
-            // ждём подключения
             var attempts = 0
             while (mediaController == null && attempts < 20) {
                 attempts++
-                delay(50) // ждём 50 мс
+                delay(50)
             }
 
             if (mediaController == null) {
@@ -90,13 +89,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val authStateListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
         val user = firebaseAuth.currentUser
         if (user != null) {
-            // Пользователь вошел в систему (или сессия восстановлена)
-            Log.d("AUTH", "AuthStateListener: User is signed in. UID: ${user.uid}")
-            _uiState.update { it.copy(isUserLoggedIn = true) }
+            _uiState.update {
+                it.copy(
+                    isUserLoggedIn = true,
+                    isUserAdmin = null
+                )
+            }
             loadUserSpecificData()
         } else {
-            // Пользователь вышел
-            Log.d("AUTH", "AuthStateListener: User is signed out.")
             _uiState.update {
                 it.copy(
                     isUserLoggedIn = false,
@@ -231,24 +231,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private fun loadStations() {
         viewModelScope.launch {
             try {
-                // Устанавливаем флаг загрузки
                 _uiState.update { it.copy(isLoading = true) }
 
-                // Загружаем станции с помощью suspend-функции
                 val stationList = fetchStationsFromNetwork()
 
-                // Обновляем состояние со списком станций
                 _uiState.update {
                     it.copy(stations = stationList)
                 }
 
-                // Загружаем данные, которые зависят от списка станций
                 loadRecentlyPlayed()
             } catch (e: Exception) {
                 Log.e("MainViewModel", "Error loading stations", e)
-                // Здесь можно обработать ошибку, например, показать сообщение пользователю
             } finally {
-                // ВАЖНО: Вне зависимости от успеха или ошибки, выключаем индикатор загрузки
                 _uiState.update { it.copy(isLoading = false) }
             }
             FirebaseAuth.getInstance().currentUser?.let {
