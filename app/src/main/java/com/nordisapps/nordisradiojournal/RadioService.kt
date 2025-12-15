@@ -100,8 +100,9 @@ class RadioService : MediaSessionService() {
             ) {
                 if (bitrateEstimate > 0) {
                     val bitrateKbps = (bitrateEstimate / 1000).toInt()
+                    sendBitrate(bitrateKbps)
+
                     Log.d("RadioService", "Bitrate: $bitrateKbps kbps")
-                    // Можно отправить битрейт через BroadcastReceiver в ViewModel
                 }
             }
         })
@@ -153,7 +154,7 @@ class RadioService : MediaSessionService() {
             .setUri(url)
             .setMediaMetadata(
                 MediaMetadata.Builder()
-                    .setArtist(name)
+                    .setStation(name)
                     .setArtworkUri(iconUrl?.toUri())
                     .build()
             )
@@ -162,6 +163,14 @@ class RadioService : MediaSessionService() {
         player.setMediaItem(mediaItem)
         player.prepare()
         player.play()
+    }
+
+    private fun sendBitrate(bitrateKbps: Int) {
+        sendBroadcast(
+            Intent("com.nordisapps.BITRATE_UPDATE").apply {
+                putExtra("bitrate", bitrateKbps)
+            }
+        )
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
