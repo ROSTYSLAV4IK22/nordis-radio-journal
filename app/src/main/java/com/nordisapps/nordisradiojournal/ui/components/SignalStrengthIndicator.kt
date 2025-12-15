@@ -34,23 +34,22 @@ fun SignalStrengthIndicator(
             val isActive = isBarActive(index, bitrate)
 
             val color by animateColorAsState(
-                targetValue = if (isActive) getColorForBitrate(bitrate) else MaterialTheme.colorScheme.surfaceVariant,
+                targetValue = if (isActive) getColorForBitrate(bitrate) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f),
                 animationSpec = tween(durationMillis = 300),
                 label = "SignalBarColor"
             )
 
             Box(
                 modifier = Modifier
-                    .width(5.dp) // Ширина палочки
-                    .height(height) // Высота из нашего массива
-                    .clip(RoundedCornerShape(2.dp)) // Скругляем углы
+                    .width(5.dp)
+                    .height(height)
+                    .clip(RoundedCornerShape(2.dp))
                     .background(color)
             )
         }
     }
 }
 
-// Вспомогательная функция для определения, активна ли палочка
 private fun isBarActive(index: Int, bitrate: Int?): Boolean {
     val currentBitrate = bitrate ?: 0
     return when (index) {
@@ -62,12 +61,11 @@ private fun isBarActive(index: Int, bitrate: Int?): Boolean {
     }
 }
 
-// Вспомогательная функция для выбора цвета по битрейту
 private fun getColorForBitrate(bitrate: Int?): Color {
     return when (bitrate ?: 0) {
-        in 0..63 -> Color(0xFFD32F2F)   // Красный (плохое качество)
+        in 0..63 -> Color(0xFFD32F2F)
         in 64..127 -> Color(0xFFFF9800)
-        in 128..191 -> Color(0xFF388E3C)  // Зеленый (хорошее)
-        else -> Color(0xFF1976D2)        // Синий (отличное)
+        in 128..191 -> Color(0xFF388E3C)
+        else -> Color(0xFF1976D2)
     }
 }
