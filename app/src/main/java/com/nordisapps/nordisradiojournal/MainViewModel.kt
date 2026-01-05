@@ -6,7 +6,11 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import android.util.Log
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -19,6 +23,7 @@ import com.google.common.util.concurrent.MoreExecutors
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.getValue
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -29,6 +34,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import java.time.LocalDate
+import java.time.Month
 import com.nordisapps.nordisradiojournal.loadStations as fetchStationsFromNetwork
 
 @Suppress("OPT_IN_ARGUMENT_IS_NOT_MARKER")
@@ -36,10 +43,8 @@ import com.nordisapps.nordisradiojournal.loadStations as fetchStationsFromNetwor
 @OptIn(UnstableApi::class)
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val _uiState = MutableStateFlow(UiState())
-
+    private val _uiState = MutableStateFlow(UiState(isLoading = true))
     val uiState: StateFlow<UiState> = _uiState
-
     private val _languageFlow = MutableStateFlow(LanguageManager.getLanguage(application))
     val languageFlow: StateFlow<String> = _languageFlow
 
@@ -57,6 +62,80 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _selectedCity = MutableStateFlow<String?>(null)
     val selectedCity: StateFlow<String?> = _selectedCity
+    private val firestore = FirebaseFirestore.getInstance()
+
+    var announcement by mutableStateOf<Announcement?>(null)
+        private set
+
+    var christmasDeco by mutableStateOf<Announcement?>(null)
+        private set
+
+    val isChristmas = mutableStateOf(checkChristmas())
+
+    private fun checkChristmas(): Boolean {
+        val today = LocalDate.now()
+
+        val start = if (today.month >= Month.DECEMBER) {
+            LocalDate.of(today.year, Month.DECEMBER, 1)
+        } else {
+            LocalDate.of(today.year -1, Month.DECEMBER, 1)
+        }
+        val end = start.plusMonths(2)
+
+        return !today.isBefore(start) && today.isBefore(end)
+    }
+
+    private fun loadAnnouncement() {
+        firestore.collection("announcements")
+            .whereEqualTo("enabled", true)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val today = LocalDate.now()
+
+                val activeAnnouncement = snapshot.documents
+                    .mapNotNull { it.toObject(Announcement::class.java) }
+                    .filter { isInDateRange(it, today) }
+                    .maxByOrNull { it.priority }
+
+                announcement = activeAnnouncement
+                _uiState.update {
+                    it.copy(isLoading = false)
+                }
+            }
+            .addOnFailureListener {
+                _uiState.update {
+                    it.copy(isLoading = false)
+                }
+            }
+    }
+
+    private fun isInDateRange(a: Announcement, today: LocalDate): Boolean {
+        val start = LocalDate.parse(a.startDate)
+        val end = LocalDate.parse(a.endDate)
+        return !today.isBefore(start) && today.isBefore(end)
+    }
+
+    fun dismissAnnouncement() {
+        announcement = null
+    }
+
+    private fun loadChristmasDeco() {
+        firestore.collection("announcements")
+            .whereEqualTo("enabled", true)
+            .whereEqualTo("type", "christmas")
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val today = LocalDate.now()
+
+                christmasDeco = snapshot.documents
+                    .mapNotNull { it.toObject(Announcement::class.java) }
+                    .firstOrNull {
+                        !today.isBefore(LocalDate.parse(it.startDate)) && today.isBefore(
+                            LocalDate.parse(it.endDate)
+                        )
+                    }
+            }
+    }
 
     private val bitrateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -92,10 +171,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _uiState.update {
                 it.copy(
                     isUserLoggedIn = true,
-                    isUserAdmin = null
+                    isUserAdmin = false
                 )
             }
-            loadUserSpecificData()
+            loadFavourites()
+            checkAdminStatus(user.uid)
         } else {
             _uiState.update {
                 it.copy(
@@ -106,24 +186,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private fun checkAdminStatus() {
-        val user = FirebaseAuth.getInstance().currentUser
-        if (user == null) {
-            _uiState.value = _uiState.value.copy(isUserAdmin = false)
-            return
-        }
-        val dbRef = FirebaseDatabase.getInstance().getReference("admins")
-        dbRef.get().addOnSuccessListener { snapshot ->
-            val adminUids = snapshot.children.map { it.value.toString() }
-            val isAdmin = user.uid in adminUids
-            _uiState.value = _uiState.value.copy(isUserAdmin = isAdmin)
-            if (isAdmin) {
-                Log.d("AUTH", "Admin status confirmed for user ${user.uid}")
+    private fun checkAdminStatus(uid: String) {
+        FirebaseDatabase.getInstance()
+            .getReference("admins")
+            .get()
+            .addOnSuccessListener { snapshot ->
+            val isAdmin = snapshot.children.any { it.value == uid }
+                _uiState.update {
+                    it.copy(isUserAdmin = isAdmin)
+                }
             }
-        }.addOnFailureListener {
-            _uiState.value = _uiState.value.copy(isUserAdmin = false)
+            .addOnFailureListener {
+                _uiState.update {
+                    it.copy(isUserAdmin = false)
+                }
+            }
         }
-    }
 
     fun setSearchQuery(query: String) {
         _searchQuery.value = query
@@ -176,15 +254,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     init {
         FirebaseAuth.getInstance().addAuthStateListener(authStateListener)
         loadStations()
-
-        FirebaseAuth.getInstance().currentUser?.let {
-            checkAdminStatus()
+        loadChristmasDeco()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(
+                bitrateReceiver,
+                IntentFilter("com.nordisapps.BITRATE_UPDATE"),
+                Context.RECEIVER_NOT_EXPORTED
+            )
+        } else {
+            context.registerReceiver(
+                bitrateReceiver,
+                IntentFilter("com.nordisapps.BITRATE_UPDATE")
+            )
         }
-        context.registerReceiver(
-            bitrateReceiver,
-            IntentFilter("com.nordisapps.BITRATE_UPDATE"),
-            Context.RECEIVER_NOT_EXPORTED
-        )
     }
 
     private fun initializeMediaController() {
@@ -245,9 +327,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             } finally {
                 _uiState.update { it.copy(isLoading = false) }
             }
-            FirebaseAuth.getInstance().currentUser?.let {
-                checkAdminStatus()
-            }
         }
     }
 
@@ -286,11 +365,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 _uiState.value = _uiState.value.copy(recentlyPlayedStations = historyStations)
             }
         }
-    }
-
-    private fun loadUserSpecificData() {
-        loadFavourites()
-        checkAdminStatus()
     }
 
     fun playStation(station: Station) {
@@ -349,10 +423,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         FirebaseAuth.getInstance().removeAuthStateListener(authStateListener)
         mediaController?.release()
         mediaController = null
-    }
-
-    fun onUserChanged() {
-        loadUserSpecificData()
     }
 
     fun toggleFavourite(station: Station) {

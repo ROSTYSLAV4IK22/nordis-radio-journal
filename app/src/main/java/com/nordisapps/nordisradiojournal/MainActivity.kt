@@ -16,6 +16,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
@@ -55,6 +57,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -92,6 +95,8 @@ import com.nordisapps.nordisradiojournal.tools.AdminPanelScreen
 import com.nordisapps.nordisradiojournal.tools.EditStationScreen
 import com.nordisapps.nordisradiojournal.ui.components.FullPlayer
 import com.nordisapps.nordisradiojournal.ui.components.MiniPlayer
+import com.nordisapps.nordisradiojournal.ui.home.SnowOverlay
+import com.nordisapps.nordisradiojournal.ui.theme.LocalImageLoader
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -129,7 +134,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
-                != PackageManager.PERMISSION_GRANTED) {
+                != PackageManager.PERMISSION_GRANTED
+            ) {
                 notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
             }
         }
@@ -140,41 +146,41 @@ class MainActivity : ComponentActivity() {
 
         checkUserAuthStatus()
 
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        if (currentUser != null) {
-            viewModel.onUserChanged()
-        }
-
         viewModel.changeLanguage(LanguageManager.getLanguage(this))
 
         setContent {
-            NordisRadioJournalTheme {
-                val currentLanguage by viewModel.languageFlow.collectAsState(
-                    initial = LanguageManager.getLanguage(
-                        this
+            val app = application as MyApp
+            CompositionLocalProvider(
+                LocalImageLoader provides app.imageLoader
+            ) {
+                NordisRadioJournalTheme {
+                    val currentLanguage by viewModel.languageFlow.collectAsState(
+                        initial = LanguageManager.getLanguage(
+                            this
+                        )
                     )
-                )
 
-                val scope = rememberCoroutineScope()
+                    val scope = rememberCoroutineScope()
 
-                MainApp(
-                    viewModel = viewModel,
-                    userPhotoUrl = userPhotoUrl,
-                    userName = userName,
-                    onSignInClick = { startSignIn() },
-                    onSignOutClick = { signOut() },
-                    onLanguageChange = { lang ->
-                        LanguageManager.saveLanguage(this, lang)
-                        viewModel.changeLanguage(lang)
+                    MainApp(
+                        viewModel = viewModel,
+                        userPhotoUrl = userPhotoUrl,
+                        userName = userName,
+                        onSignInClick = { startSignIn() },
+                        onSignOutClick = { signOut() },
+                        onLanguageChange = { lang ->
+                            LanguageManager.saveLanguage(this, lang)
+                            viewModel.changeLanguage(lang)
 
-                        scope.launch {
-                            delay(250)
-                            recreate()
-                        }
-                    },
-                    currentLanguage = currentLanguage,
-                    initialTab = initialTab
-                )
+                            scope.launch {
+                                delay(250)
+                                recreate()
+                            }
+                        },
+                        currentLanguage = currentLanguage,
+                        initialTab = initialTab
+                    )
+                }
             }
         }
     }
@@ -190,11 +196,9 @@ class MainActivity : ComponentActivity() {
                 if (user.username.isNotEmpty()) {
                     _userPhotoUrl.value = user.photoUrl
                     _userName.value = user.username
-                    viewModel.onUserChanged()
                 } else {
                     _userPhotoUrl.value = null
                     _userName.value = null
-                    viewModel.onUserChanged()
                 }
             }
         }
@@ -203,7 +207,7 @@ class MainActivity : ComponentActivity() {
     private fun startSignIn() {
         val googleIdOption = GetGoogleIdOption.Builder()
             .setFilterByAuthorizedAccounts(false)
-            .setServerClientId("700543803497-12e55ldbu0tf2vfoc9t1u9ipqk3e02d5.apps.googleusercontent.com")
+            .setServerClientId(BuildConfig.GOOGLE_CLIENT_ID)
             .build()
 
         val request = GetCredentialRequest.Builder()
@@ -247,14 +251,12 @@ class MainActivity : ComponentActivity() {
                 Log.d("AUTH", "Email: ${user?.email}")
                 Log.d("AUTH", "Display Name: ${user?.displayName}")
 
-                // Сохраняем локально
                 lifecycleScope.launch {
                     AuthManager.saveUser(
                         context = this@MainActivity,
                         username = userName,
                         photo = photoUrl
                     )
-                    viewModel.onUserChanged()
 
                     Toast.makeText(
                         this@MainActivity,
@@ -280,7 +282,6 @@ class MainActivity : ComponentActivity() {
                 credentialManager.clearCredentialState(
                     androidx.credentials.ClearCredentialStateRequest()
                 )
-                viewModel.onUserChanged()
                 Toast.makeText(
                     this@MainActivity,
                     getString(R.string.signed_out_message),
@@ -321,315 +322,352 @@ class MainActivity : ComponentActivity() {
         var showSignOutDialog by remember { mutableStateOf(false) }
         var showFullPlayer by remember { mutableStateOf(false) }
         var selectedTab by rememberSaveable(initialTab) { mutableIntStateOf(initialTab) }
+        var hideBottomUi by remember { mutableStateOf(false) }
 
         val uiState by viewModel.uiState.collectAsState()
 
 
-Box(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxSize()) {
 
-    Scaffold(
-        topBar = {
-            Column {
-                TopAppBar(
-                    title = {
-                        val route =
-                            navController.currentBackStackEntryAsState().value?.destination?.route
-                        Text(
-                            when {
-                                route == "settings" -> stringResource(R.string.settings_title)
-                                route == "admin_panel" -> "Админ панель"
-                                route?.startsWith("edit_station_screen") == true -> {
-                                    val stationId = navController.currentBackStackEntry?.arguments?.getString("stationId")
-                                    if (stationId == null) "Новая станция" else "Редактирование"
-                                }
-                                else -> stringResource(R.string.app_name)
-                            }
-                        )
-                    },
-                    navigationIcon = {
-                        val route =
-                            navController.currentBackStackEntryAsState().value?.destination?.route
-                        when {
-                            route == "settings" || route == "admin_panel" || route?.startsWith("edit_station_screen") == true -> {
-                                IconButton(onClick = { navController.popBackStack() }) {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                        contentDescription = null
-                                    )
-                                }
-                            }
-                        }
-                    },
-                    actions = {
-                        val route =
-                            navController.currentBackStackEntryAsState().value?.destination?.route
-                        // Показываем actions только если НЕ на экране редактирования
-                        if (route?.startsWith("edit_station_screen") != true) {
-                            IconButton(onClick = {
-                                navController.navigate("settings") {
-                                    launchSingleTop = true
-                                }
-                            }) {
-                                Icon(Icons.Default.Settings, contentDescription = "Настройки")
-                            }
+            Scaffold(
+                topBar = {
+                    Column {
+                        TopAppBar(
+                            title = {
+                                val route =
+                                    navController.currentBackStackEntryAsState().value?.destination?.route
 
-                            Box {
-                                if (userPhotoUrl == null) {
-                                    IconButton(onClick = onSignInClick) {
-                                        Icon(
-                                            Icons.Default.AccountCircle,
-                                            contentDescription = "Войти"
-                                        )
-                                    }
-                                } else {
-                                    IconButton(onClick = { showUserMenu = true }) {
-                                        AsyncImage(
-                                            model = userPhotoUrl,
-                                            contentDescription = stringResource(R.string.profile),
-                                            contentScale = ContentScale.Crop,
-                                            modifier = Modifier
-                                                .size(32.dp)
-                                                .clip(CircleShape)
-                                        )
-                                    }
-                                    DropdownMenu(
-                                        expanded = showUserMenu,
-                                        onDismissRequest = { showUserMenu = false }
-                                    ) {
-                                        userName?.let {
-                                            DropdownMenuItem(
-                                                text = { Text(it) },
-                                                onClick = {},
-                                                leadingIcon = {
-                                                    Icon(
-                                                        Icons.Default.AccountCircle,
-                                                        contentDescription = null
-                                                    )
-                                                },
-                                                enabled = false
-                                            )
-                                            HorizontalDivider()
-                                        }
-                                        if (uiState.isUserAdmin == true) {
-                                            DropdownMenuItem(
-                                                text = { Text(context.getString(R.string.admin_button)) },
-                                                onClick = {
-                                                    navController.navigate("admin_panel") {
-                                                        launchSingleTop = true
-                                                    }
-                                                    showUserMenu = false
-                                                },
-                                                leadingIcon = {
-                                                    Icon(
-                                                        Icons.Default.AdminPanelSettings,
-                                                        contentDescription = null
-                                                    )
+                                Text(
+                                    text = buildString {
+                                        append(
+                                            when {
+                                                route == "settings" -> stringResource(R.string.settings_title)
+                                                route == "admin_panel" -> "Админ панель"
+                                                route?.startsWith("edit_station_screen") == true -> {
+                                                    val stationId =
+                                                        navController.currentBackStackEntry
+                                                            ?.arguments
+                                                            ?.getString("stationId")
+                                                    if (stationId == null) "Новая станция" else "Редактирование"
                                                 }
-                                            )
-                                        }
-                                        DropdownMenuItem(
-                                            text = { Text(context.getString(R.string.sign_out)) },
-                                            onClick = {
-                                                showSignOutDialog = true
-                                                showUserMenu = false
-                                            },
-                                            leadingIcon = {
-                                                Icon(
-                                                    Icons.AutoMirrored.Filled.ExitToApp,
-                                                    contentDescription = null
-                                                )
+                                                else -> stringResource(R.string.app_name)
                                             }
                                         )
+                                        if (viewModel.isChristmas.value) {
+                                            append(" 🎄")
+                                        }
+                                    }
+                                )
+                            },
+                            navigationIcon = {
+                                val route =
+                                    navController.currentBackStackEntryAsState().value?.destination?.route
+                                when {
+                                    route == "settings" || route == "admin_panel" || route?.startsWith(
+                                        "edit_station_screen"
+                                    ) == true -> {
+                                        IconButton(onClick = { navController.popBackStack() }) {
+                                            Icon(
+                                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                                contentDescription = null
+                                            )
+                                        }
                                     }
                                 }
+                            },
+                            actions = {
+                                val route =
+                                    navController.currentBackStackEntryAsState().value?.destination?.route
+                                // Показываем actions только если НЕ на экране редактирования
+                                if (route?.startsWith("edit_station_screen") != true) {
+                                    IconButton(onClick = {
+                                        navController.navigate("settings") {
+                                            launchSingleTop = true
+                                        }
+                                    }) {
+                                        Icon(
+                                            Icons.Default.Settings,
+                                            contentDescription = "Настройки"
+                                        )
+                                    }
+
+                                    Box {
+                                        if (userPhotoUrl == null) {
+                                            IconButton(onClick = onSignInClick) {
+                                                Icon(
+                                                    Icons.Default.AccountCircle,
+                                                    contentDescription = "Войти"
+                                                )
+                                            }
+                                        } else {
+                                            IconButton(onClick = { showUserMenu = true }) {
+                                                AsyncImage(
+                                                    model = userPhotoUrl,
+                                                    contentDescription = stringResource(R.string.profile),
+                                                    contentScale = ContentScale.Crop,
+                                                    modifier = Modifier
+                                                        .size(32.dp)
+                                                        .clip(CircleShape)
+                                                )
+                                            }
+                                            DropdownMenu(
+                                                expanded = showUserMenu,
+                                                onDismissRequest = { showUserMenu = false }
+                                            ) {
+                                                userName?.let {
+                                                    DropdownMenuItem(
+                                                        text = { Text(it) },
+                                                        onClick = {},
+                                                        leadingIcon = {
+                                                            Icon(
+                                                                Icons.Default.AccountCircle,
+                                                                contentDescription = null
+                                                            )
+                                                        },
+                                                        enabled = false
+                                                    )
+                                                    HorizontalDivider()
+                                                }
+                                                if (uiState.isUserAdmin) {
+                                                    DropdownMenuItem(
+                                                        text = { Text(context.getString(R.string.admin_button)) },
+                                                        onClick = {
+                                                            navController.navigate("admin_panel") {
+                                                                launchSingleTop = true
+                                                            }
+                                                            showUserMenu = false
+                                                        },
+                                                        leadingIcon = {
+                                                            Icon(
+                                                                Icons.Default.AdminPanelSettings,
+                                                                contentDescription = null
+                                                            )
+                                                        }
+                                                    )
+                                                }
+                                                DropdownMenuItem(
+                                                    text = { Text(context.getString(R.string.sign_out)) },
+                                                    onClick = {
+                                                        showSignOutDialog = true
+                                                        showUserMenu = false
+                                                    },
+                                                    leadingIcon = {
+                                                        Icon(
+                                                            Icons.AutoMirrored.Filled.ExitToApp,
+                                                            contentDescription = null
+                                                        )
+                                                    }
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        )
+                        HorizontalDivider()
+                    }
+                },
+                bottomBar = {
+                    if (!hideBottomUi) {
+                        NavigationBar {
+                            val tabLabels = listOf(
+                                R.string.nav_home,
+                                R.string.nav_search,
+                                R.string.nav_favorites,
+                                R.string.nav_listen
+                            )
+                            val tabIcons = listOf(
+                                Icons.Filled.Home to Icons.Outlined.Home,
+                                Icons.Filled.Search to Icons.Outlined.Search,
+                                Icons.Filled.Star to Icons.Outlined.StarBorder,
+                                Icons.Filled.Headphones to Icons.Outlined.Headphones
+                            )
+                            tabLabels.forEachIndexed { index, labelRes ->
+                                val (filledIcon, outlinedIcon) = tabIcons[index]
+                                NavigationBarItem(
+                                    icon = {
+                                        Icon(
+                                            imageVector = if (selectedTab == index) filledIcon else outlinedIcon,
+                                            contentDescription = null
+                                        )
+                                    },
+                                    label = { Text(stringResource(labelRes)) },
+                                    selected = selectedTab == index,
+                                    onClick = { selectedTab = index }
+                                )
                             }
                         }
                     }
-                )
-                HorizontalDivider()
-            }
-        },
-        bottomBar = {
-            NavigationBar {
-                val tabLabels = listOf(
-                    R.string.nav_home,
-                    R.string.nav_search,
-                    R.string.nav_favorites,
-                    R.string.nav_listen
-                )
-                val tabIcons = listOf(
-                    Icons.Filled.Home to Icons.Outlined.Home,
-                    Icons.Filled.Search to Icons.Outlined.Search,
-                    Icons.Filled.Star to Icons.Outlined.StarBorder,
-                    Icons.Filled.Headphones to Icons.Outlined.Headphones
-                )
-                tabLabels.forEachIndexed { index, labelRes ->
-                    val (filledIcon, outlinedIcon) = tabIcons[index]
-                    NavigationBarItem(
-                        icon = {
-                            Icon(
-                                imageVector = if (selectedTab == index) filledIcon else outlinedIcon,
-                                contentDescription = null
-                            )
-                        },
-                        label = { Text(stringResource(labelRes)) },
-                        selected = selectedTab == index,
-                        onClick = { selectedTab = index }
-                    )
                 }
-            }
-        }
-    ) { padding ->
-        Box(
-            Modifier
-                .padding(padding)
-                .background(Color.Transparent)
-        ) {
-            NavHost(
-                navController = navController,
-                startDestination = "home",
-                modifier = Modifier.fillMaxSize(),
-                enterTransition = {
-                    slideInHorizontally(initialOffsetX = { it })
-                },
-                exitTransition = {
-                    slideOutHorizontally(targetOffsetX = { -it })
-                },
-                popEnterTransition = {
-                    slideInHorizontally(initialOffsetX = { -it })
-                },
-                popExitTransition = {
-                    slideOutHorizontally(targetOffsetX = { it })
-                }
-            ) {
-                composable("home") {
-                    MainScreen(
-                        viewModel = viewModel,
-                        selectedTab = selectedTab
-                    )
-                }
-                composable("settings") {
-                    SettingsMenu(
-                        currentLanguage = currentLanguage,
-                        onLanguageChange = { langCode ->
-                            onLanguageChange(langCode)
-                        }
-                    )
-                }
-                composable("admin_panel") {
-                    AdminPanelScreen(
-                        uiState = uiState,
-                        imageLoader = (context.applicationContext as MyApp).imageLoader,
-                        onDeleteStationClicked = { station ->
-                            viewModel.deleteStation(
-                                station = station,
-                                onSuccess = {
-                                    Toast.makeText(
-                                        context, "Станция \"${station.name}\" удалена",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                },
-                                onFailure = { error ->
-                                    Toast.makeText(
-                                        context,
-                                        "Ошибка удаления: ${error.message}",
-                                        Toast.LENGTH_LONG
-                                    ).show()
-                                }
-                            )
-                        },
-                        onAddStationClicked = { navController.navigate("edit_station_screen") },
-                        onEditStationClicked = { station ->
-                            navController.navigate("edit_station_screen?stationId=${station.id}")
-                        }
-                    )
-                }
-                composable(
-                    route = "edit_station_screen?stationId={stationId}",
-                    arguments = listOf(navArgument("stationId") {
-                        type = NavType.StringType
-                        nullable = true
-                    })
+            ) { padding ->
+                Box(
+                    Modifier
+                        .padding(padding)
+                        .background(Color.Transparent)
                 ) {
-                        backStackEntry ->
-                    val stationId = backStackEntry.arguments?.getString("stationId")
-                    EditStationScreen(
-                        stationId = stationId,
-                        uiState = uiState,
-                        onSaveStation = { stationToSave ->
-                            viewModel.saveStation(
-                                station = stationToSave,
-                                onSuccess = {
-                                    // Если все сохранилось успешно, возвращаемся на экран админ-панели
-                                    navController.popBackStack()
-                                    // И показываем приятное сообщение
-                                    Toast.makeText(context, "Станция сохранена!", Toast.LENGTH_SHORT).show()
-                                },
-                                onFailure = { error ->
-                                    // Если произошла ошибка, показываем ее, чтобы понять, в чем дело
-                                    Toast.makeText(context, "Ошибка сохранения: ${error.message}", Toast.LENGTH_LONG).show()
+                    NavHost(
+                        navController = navController,
+                        startDestination = "home",
+                        modifier = Modifier.fillMaxSize(),
+                        enterTransition = {
+                            slideInHorizontally(initialOffsetX = { it })
+                        },
+                        exitTransition = {
+                            slideOutHorizontally(targetOffsetX = { -it })
+                        },
+                        popEnterTransition = {
+                            slideInHorizontally(initialOffsetX = { -it })
+                        },
+                        popExitTransition = {
+                            slideOutHorizontally(targetOffsetX = { it })
+                        }
+                    ) {
+                        composable("home") {
+                            MainScreen(
+                                viewModel = viewModel,
+                                selectedTab = selectedTab,
+                                onBottomReached = {
+                                    hideBottomUi = true
                                 }
                             )
                         }
-                    )
+                        composable("settings") {
+                            SettingsMenu(
+                                currentLanguage = currentLanguage,
+                                onLanguageChange = { langCode ->
+                                    onLanguageChange(langCode)
+                                }
+                            )
+                        }
+                        composable("admin_panel") {
+                            AdminPanelScreen(
+                                uiState = uiState,
+                                imageLoader = (context.applicationContext as MyApp).imageLoader,
+                                onDeleteStationClicked = { station ->
+                                    viewModel.deleteStation(
+                                        station = station,
+                                        onSuccess = {
+                                            Toast.makeText(
+                                                context, "Станция \"${station.name}\" удалена",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        },
+                                        onFailure = { error ->
+                                            Toast.makeText(
+                                                context,
+                                                "Ошибка удаления: ${error.message}",
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                        }
+                                    )
+                                },
+                                onAddStationClicked = { navController.navigate("edit_station_screen") },
+                                onEditStationClicked = { station ->
+                                    navController.navigate("edit_station_screen?stationId=${station.id}")
+                                }
+                            )
+                        }
+                        composable(
+                            route = "edit_station_screen?stationId={stationId}",
+                            arguments = listOf(navArgument("stationId") {
+                                type = NavType.StringType
+                                nullable = true
+                            })
+                        ) { backStackEntry ->
+                            val stationId = backStackEntry.arguments?.getString("stationId")
+                            EditStationScreen(
+                                stationId = stationId,
+                                uiState = uiState,
+                                onSaveStation = { stationToSave ->
+                                    viewModel.saveStation(
+                                        station = stationToSave,
+                                        onSuccess = {
+                                            navController.popBackStack()
+                                            Toast.makeText(
+                                                context,
+                                                "Станция сохранена!",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        },
+                                        onFailure = { error ->
+                                            Toast.makeText(
+                                                context,
+                                                "Ошибка сохранения: ${error.message}",
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                        }
+                                    )
+                                }
+                            )
+                        }
+                    }
+                    if (navController.currentBackStackEntryAsState().value?.destination?.route == "home") {
+                        uiState.currentStation?.let { station ->
+                            AnimatedVisibility(
+                                visible = !hideBottomUi,
+                                enter = fadeIn(),
+                                exit = fadeOut(),
+                                modifier = Modifier.align(Alignment.BottomCenter)
+                            ) {
+                                MiniPlayer(
+                                    station = station,
+                                    trackTitle = uiState.currentTrackTitle,
+                                    isPlaying = uiState.isPlaying,
+                                    onPlayPauseClick = { viewModel.togglePlayPause() },
+                                    onClose = { viewModel.closePlayer() },
+                                    onExpandClick = { showFullPlayer = true },
+                                    imageLoader = (context.applicationContext as MyApp).imageLoader,
+                                    modifier = Modifier.align(Alignment.BottomCenter)
+                                )
+                            }
+                        }
+                    }
                 }
             }
-            if (navController.currentBackStackEntryAsState().value?.destination?.route == "home") {
-                uiState.currentStation?.let { station ->
-                    MiniPlayer(
-                        station = station,
+            AnimatedVisibility(
+                visible = showFullPlayer,
+                enter = slideInVertically(initialOffsetY = { it }),
+                exit = slideOutVertically(targetOffsetY = { it })
+            ) {
+                if (uiState.currentStation != null) {
+                    FullPlayer(
+                        station = uiState.currentStation!!,
                         trackTitle = uiState.currentTrackTitle,
                         isPlaying = uiState.isPlaying,
                         onPlayPauseClick = { viewModel.togglePlayPause() },
-                        onClose = { viewModel.closePlayer() },
-                        onExpandClick = { showFullPlayer = true },
+                        currentBitrate = uiState.currentBitrate,
+                        favouriteStations = uiState.favouriteStations,
+                        onToggleFavourite = { viewModel.toggleFavourite(uiState.currentStation!!) },
                         imageLoader = (context.applicationContext as MyApp).imageLoader,
-                        modifier = Modifier.align(Alignment.BottomCenter)
+                        onDismiss = { showFullPlayer = false }
                     )
                 }
             }
+            SnowOverlay(
+                enabled = viewModel.isChristmas.value && !showFullPlayer,
+                snowCount = 90
+            )
         }
-    }
-    AnimatedVisibility(
-        visible = showFullPlayer,
-        enter = slideInVertically(initialOffsetY = { it }),
-        exit = slideOutVertically(targetOffsetY = { it })
-    ) {
-        if (uiState.currentStation != null) {
-            FullPlayer(
-                station = uiState.currentStation!!,
-                trackTitle = uiState.currentTrackTitle,
-                isPlaying = uiState.isPlaying,
-                onPlayPauseClick = { viewModel.togglePlayPause() },
-                currentBitrate = uiState.currentBitrate,
-                favouriteStations = uiState.favouriteStations,
-                onToggleFavourite = { viewModel.toggleFavourite(uiState.currentStation!!) },
-                imageLoader = (context.applicationContext as MyApp).imageLoader,
-                onDismiss = { showFullPlayer = false } // Передаем действие для закрытия
+
+        if (showSignOutDialog) {
+            AlertDialog(
+                onDismissRequest = { showSignOutDialog = false },
+                title = { Text(stringResource(R.string.sign_out_dialog_title)) },
+                text = { Text(stringResource(R.string.sign_out_dialog_text)) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showSignOutDialog = false
+                        onSignOutClick()
+                    }) {
+                        Text(stringResource(R.string.sign_out_dialog_confirm))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showSignOutDialog = false }) {
+                        Text(stringResource(R.string.cancel))
+                    }
+                }
             )
         }
     }
-}
-
-if (showSignOutDialog) {
-    AlertDialog(
-        onDismissRequest = { showSignOutDialog = false },
-        title = { Text(stringResource(R.string.sign_out_dialog_title)) },
-        text = { Text(stringResource(R.string.sign_out_dialog_text)) },
-        confirmButton = {
-            TextButton(onClick = {
-                showSignOutDialog = false
-                onSignOutClick()
-            }) {
-                Text(stringResource(R.string.sign_out_dialog_confirm))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = { showSignOutDialog = false }) {
-                Text(stringResource(R.string.cancel))
-            }
-        }
-    )
-}
-}
 }
