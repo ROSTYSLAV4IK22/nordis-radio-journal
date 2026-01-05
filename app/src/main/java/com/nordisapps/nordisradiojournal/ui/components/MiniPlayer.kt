@@ -29,11 +29,11 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
-import coil.ImageLoader
 import coil.compose.AsyncImagePainter
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
 import com.nordisapps.nordisradiojournal.Station
+import com.nordisapps.nordisradiojournal.ui.theme.LocalImageLoader
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -45,9 +45,9 @@ fun MiniPlayer(
     onPlayPauseClick: () -> Unit,
     onClose: () -> Unit,
     onExpandClick: () -> Unit,
-    imageLoader: ImageLoader,
     modifier: Modifier = Modifier
 ) {
+    val imageLoader = LocalImageLoader.current
     var isClicked by remember { mutableStateOf(false) }
     var interactionCounter by remember { mutableIntStateOf(0) }
     val interactionSource = remember { MutableInteractionSource() }
@@ -123,10 +123,15 @@ fun MiniPlayer(
                         var textWidth by remember { mutableIntStateOf(0) }
                         val animationOffset = remember { Animatable(0f) }
 
-                        LaunchedEffect(trackTitle, containerWidth, textWidth) {
+                        LaunchedEffect(trackTitle, containerWidth, textWidth, isPlaying) {
+                            if (!isPlaying) {
+                                animationOffset.snapTo(0f)
+                                return@LaunchedEffect
+                            }
                             if (containerWidth > 0 && textWidth > containerWidth) {
                                 val scrollDistance = (textWidth - containerWidth).toFloat() + 100f
                                 animationOffset.stop()
+                                animationOffset.snapTo(0f)
                                 animationOffset.animateTo(
                                     targetValue = scrollDistance,
                                     animationSpec = infiniteRepeatable(
@@ -137,7 +142,7 @@ fun MiniPlayer(
                                             easing = LinearEasing,
                                             delayMillis = 1000
                                         ),
-                                        repeatMode = RepeatMode.Restart
+                                        repeatMode = RepeatMode.Reverse
                                     )
                                 )
                             } else {
