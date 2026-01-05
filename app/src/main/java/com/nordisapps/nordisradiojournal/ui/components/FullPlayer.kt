@@ -1,5 +1,3 @@
-@file:Suppress("SpellCheckingInspection")
-
 package com.nordisapps.nordisradiojournal.ui.components
 
 import androidx.compose.animation.core.Animatable
@@ -27,9 +25,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import coil.ImageLoader
 import coil.compose.SubcomposeAsyncImage
 import com.nordisapps.nordisradiojournal.Station
+import com.nordisapps.nordisradiojournal.ui.theme.LocalImageLoader
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -43,9 +41,9 @@ fun FullPlayer(
     currentBitrate: Int?,
     favouriteStations: List<Station>,
     onToggleFavourite: () -> Unit,
-    imageLoader: ImageLoader,
     onDismiss: () -> Unit
 ) {
+    val imageLoader = LocalImageLoader.current
     val isFavourite = favouriteStations.any { it.id == station.id }
     val offsetY = remember { Animatable(0f) }
     val coroutineScope = rememberCoroutineScope()
@@ -53,8 +51,8 @@ fun FullPlayer(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.3f)) // Затемнение фона
-            .statusBarsPadding() // Отступ от статус-бара
+            .background(Color.Black.copy(alpha = 0.3f))
+            .statusBarsPadding()
     ) {
         Card(
             modifier = modifier
@@ -63,7 +61,6 @@ fun FullPlayer(
                 .draggable(
                     orientation = Orientation.Vertical,
                     state = rememberDraggableState { delta ->
-                        // Позволяем тащить только вниз
                         if (offsetY.value + delta >= 0) {
                             coroutineScope.launch {
                                 offsetY.snapTo(offsetY.value + delta)
@@ -83,13 +80,11 @@ fun FullPlayer(
             shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
             elevation = CardDefaults.cardElevation(8.dp)
         ) {
-            // ИСПОЛЬЗУЕМ Box, А НЕ Column, В КАЧЕСТВЕ ГЛАВНОГО КОНТЕЙНЕРА
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .windowInsetsPadding(WindowInsets.systemBars)
             ) {
-                // "РУЧКА" - прибита к верху Box'а
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopCenter)
@@ -100,17 +95,14 @@ fun FullPlayer(
                         .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
                 )
 
-                // ОСНОВНОЙ КОНТЕНТ - находится в Column, который НЕ занимает весь экран
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        // Отступы, чтобы контент не наезжал на ручку и кнопки
                         .padding(horizontal = 24.dp, vertical = 32.dp)
                         .navigationBarsPadding(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Spacer(modifier = Modifier.height(32.dp))
-                    // Адаптивная картинка
                     SubcomposeAsyncImage(
                         model = station.icon,
                         imageLoader = imageLoader,
@@ -129,7 +121,6 @@ fun FullPlayer(
 
                     Spacer(modifier = Modifier.height(32.dp))
 
-                    // Текст
                     Text(
                         text = station.name ?: "Unknown Station",
                         style = MaterialTheme.typography.titleMedium,
