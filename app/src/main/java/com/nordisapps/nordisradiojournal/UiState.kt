@@ -1,5 +1,11 @@
 package com.nordisapps.nordisradiojournal
 
+sealed class AdminState {
+    object Unknown : AdminState()
+    object Admin : AdminState()
+    object NotAdmin : AdminState()
+}
+
 data class UiState(
     val stations: List<Station> = emptyList(),
     val isLoading: Boolean = true,
@@ -9,6 +15,6 @@ data class UiState(
     val currentBitrate: Int? = null,
     val recentlyPlayedStations: List<Station> = emptyList(),
     val favouriteStations: List<Station> = emptyList(),
-    val isUserAdmin: Boolean? = null,
+    val adminState: AdminState = AdminState.Unknown,
     val isUserLoggedIn: Boolean = false
 )
