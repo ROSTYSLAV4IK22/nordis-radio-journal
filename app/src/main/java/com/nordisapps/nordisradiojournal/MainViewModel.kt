@@ -42,6 +42,9 @@ import com.nordisapps.nordisradiojournal.loadStations as fetchStationsFromNetwor
 @UnstableApi
 @OptIn(UnstableApi::class)
 class MainViewModel(application: Application) : AndroidViewModel(application) {
+    private companion object {
+        const val ENABLE_ANNOUNCEMENTS = false
+    }
 
     private val _uiState = MutableStateFlow(UiState(isLoading = true))
     val uiState: StateFlow<UiState> = _uiState
@@ -85,6 +88,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         return !today.isBefore(start) && today.isBefore(end)
     }
 
+    /**
+     * Announcement system (disabled for now)
+     *
+     * Planned usage:
+     * - Time-limited announcements
+     * - Priority-based selection
+     * - Seasonal / admin controlled messages
+     *
+     * TODO: Enable after UI/UX decision
+     */
     private fun loadAnnouncement() {
         firestore.collection("announcements")
             .whereEqualTo("enabled", true)
@@ -171,7 +184,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _uiState.update {
                 it.copy(
                     isUserLoggedIn = true,
-                    isUserAdmin = false
+                    adminState = AdminState.Unknown
                 )
             }
             loadFavourites()
@@ -180,7 +193,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _uiState.update {
                 it.copy(
                     isUserLoggedIn = false,
-                    isUserAdmin = false
+                    adminState = AdminState.NotAdmin
                 )
             }
         }
@@ -193,12 +206,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             .addOnSuccessListener { snapshot ->
             val isAdmin = snapshot.children.any { it.value == uid }
                 _uiState.update {
-                    it.copy(isUserAdmin = isAdmin)
+                    it.copy(
+                        adminState = if (isAdmin)
+                            AdminState.Admin
+                        else
+                            AdminState.NotAdmin
+                    )
                 }
             }
             .addOnFailureListener {
                 _uiState.update {
-                    it.copy(isUserAdmin = false)
+                    it.copy(adminState = AdminState.NotAdmin)
                 }
             }
         }
@@ -254,6 +272,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     init {
         FirebaseAuth.getInstance().addAuthStateListener(authStateListener)
         loadStations()
+        if (ENABLE_ANNOUNCEMENTS) {
+            loadAnnouncement()
+        }
         loadChristmasDeco()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             context.registerReceiver(
