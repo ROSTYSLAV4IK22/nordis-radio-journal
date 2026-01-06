@@ -25,10 +25,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import coil.ImageLoader
 import coil.compose.AsyncImage
 import com.nordisapps.nordisradiojournal.Station
 import com.nordisapps.nordisradiojournal.UiState
+import com.nordisapps.nordisradiojournal.ui.theme.LocalImageLoader
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlin.math.abs
 
@@ -37,7 +37,6 @@ private const val FAB_SCROLL_THRESHOLD = 50
 @Composable
 fun AdminPanelScreen(
     uiState: UiState,
-    imageLoader: ImageLoader,
     onAddStationClicked: () -> Unit,
     onEditStationClicked: (Station) -> Unit,
     onDeleteStationClicked: (Station) -> Unit
@@ -81,14 +80,12 @@ fun AdminPanelScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues),
-            contentPadding = PaddingValues(16.dp), // Отступы для всего списка
-            verticalArrangement = Arrangement.spacedBy(12.dp) // Расстояние между элементами
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Используем items для отображения списка станций
             items(uiState.stations, key = { it.id ?: it.name ?: "" }) { station ->
                 AdminStationItem(
                     station = station,
-                    imageLoader = imageLoader,
                     onEdit = { onEditStationClicked(station) },
                     onDelete = { stationToDelete = station }
                 )
@@ -125,10 +122,10 @@ fun AdminPanelScreen(
 @Composable
 private fun AdminStationItem(
     station: Station,
-    imageLoader: ImageLoader,
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val imageLoader = LocalImageLoader.current
     var expanded by remember { mutableStateOf(false) }
 
     Card(
@@ -152,7 +149,6 @@ private fun AdminStationItem(
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(station.name ?: "No Name", style = MaterialTheme.typography.titleMedium)
-                    // Отображаем ID, так как это важно для администрирования
                     Text(
                         station.displayId?.toString() ?: "The display ID is not set",
                         style = MaterialTheme.typography.bodySmall,
@@ -160,7 +156,6 @@ private fun AdminStationItem(
                     )
                 }
 
-                // Кнопки "Редактировать" и "Удалить"
                 IconButton(onClick = onEdit) {
                     Icon(Icons.Default.Edit, contentDescription = null)
                 }
@@ -176,12 +171,11 @@ private fun AdminStationItem(
                 Column(
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
-                        .padding(bottom = 16.dp), // Отступы для содержимого
-                    verticalArrangement = Arrangement.spacedBy(4.dp) // Расстояние между строками
+                        .padding(bottom = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    HorizontalDivider(modifier = Modifier.padding(bottom = 8.dp)) // Разделитель
+                    HorizontalDivider(modifier = Modifier.padding(bottom = 8.dp))
 
-                    // Выводим все поля станции с подписями
                     InfoRow("Firebase ID:", station.id)
                     InfoRow("Icon URL:", station.icon)
                     InfoRow("Stream URL:", station.stream)
@@ -204,10 +198,10 @@ private fun InfoRow(label: String, value: String?) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelMedium,
-            modifier = Modifier.width(120.dp) // Фиксированная ширина для метки
+            modifier = Modifier.width(120.dp)
         )
         Text(
-            text = value ?: "-", // Если значение null, показываем прочерк
+            text = value ?: "-",
             style = MaterialTheme.typography.bodyMedium
         )
     }
