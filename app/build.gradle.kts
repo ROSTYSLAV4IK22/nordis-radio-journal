@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -5,11 +7,26 @@ plugins {
     alias(libs.plugins.google.services)
 }
 
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) {
+        file.inputStream().use { load(it) }
+    }
+}
+
+val googleClientId: String =
+    localProperties.getProperty("GOOGLE_CLIENT_ID") ?: ""
+
 android {
     namespace = "com.nordisapps.nordisradiojournal"
     compileSdk = 36
 
     defaultConfig {
+        buildConfigField(
+            "String",
+            "GOOGLE_CLIENT_ID",
+            "\"$googleClientId\""
+        )
         applicationId = "com.nordisapps.nordisradiojournal"
         minSdk = 26
         targetSdk = 36
@@ -39,6 +56,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -62,6 +80,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(platform(libs.google.firebase.bom))
     implementation(libs.google.firebase.database)
+    implementation(libs.google.firebase.firestore)
     implementation(libs.google.firebase.auth)
     implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.media3.common)
