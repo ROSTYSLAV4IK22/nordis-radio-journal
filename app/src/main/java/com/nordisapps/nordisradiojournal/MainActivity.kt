@@ -428,7 +428,7 @@ class MainActivity : ComponentActivity() {
                                                     )
                                                     HorizontalDivider()
                                                 }
-                                                if (uiState.isUserAdmin) {
+                                                if (uiState.adminState is AdminState.Admin) {
                                                     DropdownMenuItem(
                                                         text = { Text(context.getString(R.string.admin_button)) },
                                                         onClick = {
@@ -542,7 +542,6 @@ class MainActivity : ComponentActivity() {
                         composable("admin_panel") {
                             AdminPanelScreen(
                                 uiState = uiState,
-                                imageLoader = (context.applicationContext as MyApp).imageLoader,
                                 onDeleteStationClicked = { station ->
                                     viewModel.deleteStation(
                                         station = station,
@@ -616,7 +615,6 @@ class MainActivity : ComponentActivity() {
                                     onPlayPauseClick = { viewModel.togglePlayPause() },
                                     onClose = { viewModel.closePlayer() },
                                     onExpandClick = { showFullPlayer = true },
-                                    imageLoader = (context.applicationContext as MyApp).imageLoader,
                                     modifier = Modifier.align(Alignment.BottomCenter)
                                 )
                             }
@@ -638,7 +636,6 @@ class MainActivity : ComponentActivity() {
                         currentBitrate = uiState.currentBitrate,
                         favouriteStations = uiState.favouriteStations,
                         onToggleFavourite = { viewModel.toggleFavourite(uiState.currentStation!!) },
-                        imageLoader = (context.applicationContext as MyApp).imageLoader,
                         onDismiss = { showFullPlayer = false }
                     )
                 }
