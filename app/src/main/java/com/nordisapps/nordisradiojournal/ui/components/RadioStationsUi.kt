@@ -13,6 +13,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Star
@@ -27,8 +29,10 @@ import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.Dialog
-import coil.ImageLoader
 import com.nordisapps.nordisradiojournal.R
+import com.nordisapps.nordisradiojournal.ui.theme.LocalImageLoader
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun RadioStationItem(
@@ -40,17 +44,21 @@ fun RadioStationItem(
     ps: String?,
     rt: String?,
     isFavourite: Boolean,
-    imageLoader: ImageLoader,
     onFavouriteClick: () -> Unit,
     onListenClick: () -> Unit
 ) {
+    val imageLoader = LocalImageLoader.current
     var expanded by remember { mutableStateOf(false) }
     var showImageDialog by remember { mutableStateOf(false) }
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+    val scope = rememberCoroutineScope()
+    val rotation by animateFloatAsState(if (expanded) 180f else 0f)
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp),
+            .padding(8.dp)
+            .bringIntoViewRequester(bringIntoViewRequester),
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Column {
@@ -89,7 +97,15 @@ fun RadioStationItem(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(8.dp))
-                        .clickable { expanded = !expanded }
+                        .clickable {
+                            expanded = !expanded
+                            if (expanded) {
+                                scope.launch {
+                                    delay(180)
+                                    bringIntoViewRequester.bringIntoView()
+                                }
+                            }
+                        }
                         .padding(horizontal = 4.dp)
                 ) {
                     Text(
@@ -126,8 +142,17 @@ fun RadioStationItem(
 
                 Spacer(Modifier.width(8.dp))
 
-                IconButton(onClick = { expanded = !expanded }) {
-                    val rotation by animateFloatAsState(if (expanded) 180f else 0f)
+                IconButton(
+                    onClick = {
+                        expanded = !expanded
+                        if (expanded) {
+                            scope.launch {
+                                delay(180)
+                                bringIntoViewRequester.bringIntoView()
+                            }
+                        }
+                    }
+                ) {
                     Icon(
                         imageVector = Icons.Default.ArrowDropDown,
                         contentDescription = null,
@@ -177,7 +202,6 @@ fun RadioStationItem(
     if (showImageDialog) {
         EnlargedStationIconDialog(
             iconUrl = icon,
-            imageLoader = imageLoader,
             onDismiss = { showImageDialog = false }
         )
     }
@@ -186,8 +210,9 @@ fun RadioStationItem(
 @Composable
 private fun EnlargedStationIconDialog(
     iconUrl: String,
-    imageLoader: ImageLoader, onDismiss: () -> Unit
+    onDismiss: () -> Unit
 ) {
+    val imageLoader = LocalImageLoader.current
     Dialog(onDismissRequest = onDismiss) {
         Card(
             shape = RoundedCornerShape(16.dp),
