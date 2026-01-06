@@ -19,16 +19,14 @@ import com.nordisapps.nordisradiojournal.UiState
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditStationScreen(
-    stationId: String?, // ID станции, которую редактируем. Null, если это новая станция.
+    stationId: String?,
     uiState: UiState,
     onSaveStation: (Station) -> Unit
 ) {
-    // 1. Находим станцию в общем списке по ID
     val stationToEdit = remember(stationId, uiState.stations) {
         uiState.stations.find { it.id == stationId }
     }
 
-    // 2. Создаем состояния для каждого текстового поля
     var displayId by remember {
         mutableStateOf(stationToEdit?.displayId?.toString() ?: "")
     }
@@ -66,12 +64,12 @@ fun EditStationScreen(
             }
         }
     ) { paddingValues ->
-        // Используем Column с прокруткой, так как полей будет много
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(16.dp)
+                .imePadding()
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
