@@ -17,7 +17,6 @@
     <string name="select_city">Город</string>
     <string name="no_favorite_stations">Пока нет избранных станций</string>
     <string name="select_station_to_listen">Выберите станцию для прослушивания</string>
-    <string name="popular_stations">Популярные станции</string>
     <string name="favorite_stations">Избранные станции</string>
     <string name="country_romania">Румыния</string>
     <string name="country_ukraine">Украина</string>
@@ -48,4 +47,5 @@
     <string name="shortcut_favorites_long">Мои избранные станции</string>
     <string name="no_stations_found">Ничего не найдено</string>
     <string name="recently_played">Недавно прослушано</string>
+    <string name="current_events">Актуальные события</string>
 </resources>
