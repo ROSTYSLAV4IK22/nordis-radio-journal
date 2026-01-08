@@ -19,7 +19,6 @@
     <string name="select_city">City</string>
     <string name="no_favorite_stations">There are no favorite stations yet</string>
     <string name="select_station_to_listen">Select a station to listen to</string>
-    <string name="popular_stations">Popular stations</string>
     <string name="favorite_stations">Favorite stations</string>
     <string name="country_romania">Romania</string>
     <string name="country_ukraine">Ukraine</string>
@@ -32,7 +31,7 @@
     <string name="language">Language</string>
     <string name="select_language">Select a language</string>
     <string name="profile">Profile</string>
-    <string name="admin_button">Admin Panel</string>
+    <string name="admin_button" translatable="false">Admin Panel</string>
     <string name="welcome_message">Hello, %1$s!</string>
     <string name="sign_in_error">Sign in error: %1$s</string>
     <string name="signed_out_message">You have been signed out</string>
@@ -57,4 +56,5 @@
     <string name="shortcut_favorites_long">My favorite stations</string>
     <string name="no_stations_found">Nothing found</string>
     <string name="recently_played">Recently listened</string>
+    <string name="current_events">Current events</string>
 </resources>
