@@ -16,8 +16,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
@@ -322,8 +320,6 @@ class MainActivity : ComponentActivity() {
         var showSignOutDialog by remember { mutableStateOf(false) }
         var showFullPlayer by remember { mutableStateOf(false) }
         var selectedTab by rememberSaveable(initialTab) { mutableIntStateOf(initialTab) }
-        var hideBottomUi by remember { mutableStateOf(false) }
-
         val uiState by viewModel.uiState.collectAsState()
 
 
@@ -350,6 +346,7 @@ class MainActivity : ComponentActivity() {
                                                             ?.getString("stationId")
                                                     if (stationId == null) "Новая станция" else "Редактирование"
                                                 }
+
                                                 else -> stringResource(R.string.app_name)
                                             }
                                         )
@@ -430,7 +427,7 @@ class MainActivity : ComponentActivity() {
                                                 }
                                                 if (uiState.adminState is AdminState.Admin) {
                                                     DropdownMenuItem(
-                                                        text = { Text(context.getString(R.string.admin_button)) },
+                                                        text = { Text(stringResource(R.string.admin_button)) },
                                                         onClick = {
                                                             navController.navigate("admin_panel") {
                                                                 launchSingleTop = true
@@ -446,7 +443,7 @@ class MainActivity : ComponentActivity() {
                                                     )
                                                 }
                                                 DropdownMenuItem(
-                                                    text = { Text(context.getString(R.string.sign_out)) },
+                                                    text = { Text(stringResource(R.string.sign_out)) },
                                                     onClick = {
                                                         showSignOutDialog = true
                                                         showUserMenu = false
@@ -468,34 +465,32 @@ class MainActivity : ComponentActivity() {
                     }
                 },
                 bottomBar = {
-                    if (!hideBottomUi) {
-                        NavigationBar {
-                            val tabLabels = listOf(
-                                R.string.nav_home,
-                                R.string.nav_search,
-                                R.string.nav_favorites,
-                                R.string.nav_listen
+                    NavigationBar {
+                        val tabLabels = listOf(
+                            R.string.nav_home,
+                            R.string.nav_search,
+                            R.string.nav_favorites,
+                            R.string.nav_listen
+                        )
+                        val tabIcons = listOf(
+                            Icons.Filled.Home to Icons.Outlined.Home,
+                            Icons.Filled.Search to Icons.Outlined.Search,
+                            Icons.Filled.Star to Icons.Outlined.StarBorder,
+                            Icons.Filled.Headphones to Icons.Outlined.Headphones
+                        )
+                        tabLabels.forEachIndexed { index, labelRes ->
+                            val (filledIcon, outlinedIcon) = tabIcons[index]
+                            NavigationBarItem(
+                                icon = {
+                                    Icon(
+                                        imageVector = if (selectedTab == index) filledIcon else outlinedIcon,
+                                        contentDescription = null
+                                    )
+                                },
+                                label = { Text(stringResource(labelRes)) },
+                                selected = selectedTab == index,
+                                onClick = { selectedTab = index }
                             )
-                            val tabIcons = listOf(
-                                Icons.Filled.Home to Icons.Outlined.Home,
-                                Icons.Filled.Search to Icons.Outlined.Search,
-                                Icons.Filled.Star to Icons.Outlined.StarBorder,
-                                Icons.Filled.Headphones to Icons.Outlined.Headphones
-                            )
-                            tabLabels.forEachIndexed { index, labelRes ->
-                                val (filledIcon, outlinedIcon) = tabIcons[index]
-                                NavigationBarItem(
-                                    icon = {
-                                        Icon(
-                                            imageVector = if (selectedTab == index) filledIcon else outlinedIcon,
-                                            contentDescription = null
-                                        )
-                                    },
-                                    label = { Text(stringResource(labelRes)) },
-                                    selected = selectedTab == index,
-                                    onClick = { selectedTab = index }
-                                )
-                            }
                         }
                     }
                 }
@@ -525,10 +520,7 @@ class MainActivity : ComponentActivity() {
                         composable("home") {
                             MainScreen(
                                 viewModel = viewModel,
-                                selectedTab = selectedTab,
-                                onBottomReached = {
-                                    hideBottomUi = true
-                                }
+                                selectedTab = selectedTab
                             )
                         }
                         composable("settings") {
@@ -602,22 +594,15 @@ class MainActivity : ComponentActivity() {
                     }
                     if (navController.currentBackStackEntryAsState().value?.destination?.route == "home") {
                         uiState.currentStation?.let { station ->
-                            AnimatedVisibility(
-                                visible = !hideBottomUi,
-                                enter = fadeIn(),
-                                exit = fadeOut(),
+                            MiniPlayer(
+                                station = station,
+                                trackTitle = uiState.currentTrackTitle,
+                                isPlaying = uiState.isPlaying,
+                                onPlayPauseClick = { viewModel.togglePlayPause() },
+                                onClose = { viewModel.closePlayer() },
+                                onExpandClick = { showFullPlayer = true },
                                 modifier = Modifier.align(Alignment.BottomCenter)
-                            ) {
-                                MiniPlayer(
-                                    station = station,
-                                    trackTitle = uiState.currentTrackTitle,
-                                    isPlaying = uiState.isPlaying,
-                                    onPlayPauseClick = { viewModel.togglePlayPause() },
-                                    onClose = { viewModel.closePlayer() },
-                                    onExpandClick = { showFullPlayer = true },
-                                    modifier = Modifier.align(Alignment.BottomCenter)
-                                )
-                            }
+                            )
                         }
                     }
                 }
