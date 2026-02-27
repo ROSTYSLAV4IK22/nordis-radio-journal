@@ -148,7 +148,7 @@ fun FullPlayer(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    if (!trackTitle.isNullOrBlank()) {
+                    if (!trackTitle.isNullOrBlank() && trackTitle != station.name) {
                         Text(
                             text = trackTitle,
                             style = MaterialTheme.typography.titleMedium,
