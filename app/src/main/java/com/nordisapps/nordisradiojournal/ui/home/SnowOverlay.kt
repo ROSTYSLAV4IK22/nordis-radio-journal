@@ -17,6 +17,7 @@ import kotlin.random.Random
 
 private data class Snowflake(
     val x: Float,
+    val startY: Float,
     val size: Float,
     val speed: Float,
     val alpha: Float
@@ -33,9 +34,10 @@ fun SnowOverlay(
         List(snowCount) {
             Snowflake(
                 x = Random.nextFloat(),
-                size = Random.nextFloat() * 6f + 2f,
-                speed = Random.nextFloat() * 0.4f + 0.2f,
-                alpha = Random.nextFloat() * 0.5f + 0.3f
+                startY = Random.nextFloat(),
+                size = Random.nextFloat() * 2.5f + 1.5f,
+                speed = Random.nextFloat() * 0.25f + 0.1f,
+                alpha = Random.nextFloat() * 0.15f + 0.15f
             )
         }
     }
@@ -55,11 +57,11 @@ fun SnowOverlay(
         val height = size.height
 
         flakes.forEach { flake ->
-            val y = (progress * height * flake.speed) % height
-            val x = (flake.x * width + progress * 10f * flake.speed) % width
+            val y = (flake.startY * height + progress * height * flake.speed) % height
+            val x = (flake.x * width + progress * 20f * flake.speed) % width
 
             drawCircle(
-                color = Color.White.copy(alpha = flake.alpha),
+                color = Color(0xFFE6ECF2).copy(alpha = flake.alpha),
                 radius = flake.size,
                 center = Offset(x, y)
             )
