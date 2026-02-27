@@ -6,11 +6,11 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.os.Build
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.content.ContextCompat
 import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -187,7 +187,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     adminState = AdminState.Unknown
                 )
             }
-            loadFavourites()
             checkAdminStatus(user.uid)
         } else {
             _uiState.update {
@@ -276,18 +275,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             loadAnnouncement()
         }
         loadChristmasDeco()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            context.registerReceiver(
-                bitrateReceiver,
-                IntentFilter("com.nordisapps.BITRATE_UPDATE"),
-                Context.RECEIVER_NOT_EXPORTED
-            )
-        } else {
-            context.registerReceiver(
-                bitrateReceiver,
-                IntentFilter("com.nordisapps.BITRATE_UPDATE")
-            )
-        }
+        val filter = IntentFilter("com.nordisapps.BITRATE_UPDATE")
+        ContextCompat.registerReceiver(
+            context,
+            bitrateReceiver,
+            filter,
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
     }
 
     private fun initializeMediaController() {
@@ -343,6 +337,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
 
                 loadRecentlyPlayed()
+                loadFavourites()
             } catch (e: Exception) {
                 Log.e("MainViewModel", "Error loading stations", e)
             } finally {
