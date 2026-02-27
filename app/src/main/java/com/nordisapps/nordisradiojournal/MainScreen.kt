@@ -35,8 +35,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.outlined.EventBusy
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.material.icons.outlined.StarBorder
@@ -47,7 +47,6 @@ import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -58,10 +57,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.media3.common.util.UnstableApi
 import coil.compose.SubcomposeAsyncImage
-import androidx.compose.runtime.snapshotFlow
 import com.nordisapps.nordisradiojournal.ui.home.ChristmasDecoCard
 import com.nordisapps.nordisradiojournal.ui.theme.LocalImageLoader
-import kotlinx.coroutines.flow.distinctUntilChanged
 
 data class LocationItem(val key: String, val displayName: String)
 
@@ -70,35 +67,12 @@ data class LocationItem(val key: String, val displayName: String)
 @Composable
 fun MainScreen(
     viewModel: MainViewModel,
-    selectedTab: Int,
-    onBottomReached: () -> Unit
+    selectedTab: Int
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val isLoading = uiState.isLoading
     val searchQuery by viewModel.searchQuery.collectAsState()
     var isSearchFocused by rememberSaveable { mutableStateOf(false) }
-
-    val stationsListState = rememberLazyListState()
-    val favouritesListState = rememberLazyListState()
-
-    val activeListState = when (selectedTab) {
-        1 -> stationsListState
-        else -> null
-    }
-
-    LaunchedEffect(activeListState) {
-        if (activeListState == null) return@LaunchedEffect
-
-        snapshotFlow {
-            val layoutInfo = activeListState.layoutInfo
-            val last = layoutInfo.visibleItemsInfo.lastOrNull()
-            last != null && last.index >= layoutInfo.totalItemsCount -2
-        }
-            .distinctUntilChanged()
-            .collect { atBottom ->
-                if (atBottom) onBottomReached()
-            }
-    }
 
     val favourites = uiState.favouriteStations
     val filteredStations by viewModel.filteredStations.collectAsState()
@@ -179,15 +153,34 @@ fun MainScreen(
                             .height(140.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        if (isLoading) {
-                            CircularProgressIndicator()
-                        } else {
-                            viewModel.christmasDeco?.let {
+                        when {
+                            isLoading -> {
+                                CircularProgressIndicator()
+                            }
+
+                            viewModel.christmasDeco != null -> {
+                                val deco = viewModel.christmasDeco!!
                                 ChristmasDecoCard(
-                                    imageUrl = it.imageUrl ?: "",
-                                    title = it.title,
-                                    description = it.description
+                                    imageUrl = deco.imageUrl.orEmpty(),
+                                    title = deco.title,
+                                    description = deco.description
                                 )
+                            }
+
+                            else -> {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.EventBusy,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Spacer(Modifier.height(8.dp))
+                                    Text(
+                                        text = stringResource(R.string.no_active_events),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                             }
                         }
                     }
@@ -331,7 +324,6 @@ fun MainScreen(
                         } else {
                             if (isFilterActive) {
                                 LazyColumn(
-                                    state = stationsListState,
                                     modifier = Modifier.padding(horizontal = 8.dp)
                                 ) {
                                     items(
@@ -345,8 +337,8 @@ fun MainScreen(
                                             location = station.location ?: "",
                                             ps = station.ps ?: "",
                                             rt = station.rt ?: "",
+                                            hasIssues = station.hasIssues ?: false,
                                             isFavourite = favourites.any { it.id == station.id },
-                                            imageLoader = imageLoader,
                                             onFavouriteClick = { viewModel.toggleFavourite(station) },
                                             onListenClick = { viewModel.playStation(station) }
                                         )
@@ -382,7 +374,7 @@ fun MainScreen(
                         }
                     }
                 } else {
-                    LazyColumn(state = favouritesListState) {
+                    LazyColumn {
                         items(
                             count = favourites.size,
                             key = { index ->
@@ -398,8 +390,8 @@ fun MainScreen(
                                 location = station.location ?: "",
                                 ps = station.ps ?: "",
                                 rt = station.rt ?: "",
+                                hasIssues = station.hasIssues ?: false,
                                 isFavourite = true,
-                                imageLoader = imageLoader,
                                 onFavouriteClick = { viewModel.toggleFavourite(station) },
                                 onListenClick = { viewModel.playStation(station) }
                             )
