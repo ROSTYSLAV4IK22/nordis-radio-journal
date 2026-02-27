@@ -48,5 +48,7 @@
     <string name="no_stations_found">Nu s-a găsit nimic</string>
     <string name="recently_played">Ascultat recent</string>
     <string name="current_events">Evenimente actuale</string>
+    <string name="no_active_events">Nu există evenimente curente în acest moment</string>
+    <string name="station_stream_issues">Acest radio poate avea probleme de streaming (streaming întrerupt sau instabil)</string>
 
 </resources>
