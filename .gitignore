@@ -37,3 +37,6 @@ Thumbs.db
 # External native build
 .externalNativeBuild/
 .cxx/
+
+# Admin tools
+app/src/main/java/com/nordisapps/nordisradiojournal/tools/
