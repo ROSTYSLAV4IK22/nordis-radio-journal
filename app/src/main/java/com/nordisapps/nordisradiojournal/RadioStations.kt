@@ -16,7 +16,8 @@ data class Station(
     val country: String? = null,
     val mainCity: String? = null,
     val stationCity: String? = null,
-    val location: String? = null
+    val location: String? = null,
+    val hasIssues: Boolean? = null
 )
 
 val database = FirebaseDatabase.getInstance()
