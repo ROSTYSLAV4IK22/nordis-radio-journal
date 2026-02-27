@@ -26,8 +26,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import coil.compose.AsyncImagePainter
 import coil.compose.SubcomposeAsyncImage
@@ -117,20 +117,19 @@ fun MiniPlayer(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    if (!trackTitle.isNullOrBlank()) {
-                        val density = LocalDensity.current
-                        var containerWidth by remember { mutableIntStateOf(0) }
-                        var textWidth by remember { mutableIntStateOf(0) }
-                        val animationOffset = remember { Animatable(0f) }
 
+                    var containerWidth by remember { mutableIntStateOf(0) }
+                    var textWidth by remember { mutableIntStateOf(0) }
+                    val animationOffset = remember(trackTitle) { Animatable(0f) }
+
+                    if (!trackTitle.isNullOrBlank() && trackTitle != station.name) {
                         LaunchedEffect(trackTitle, containerWidth, textWidth, isPlaying) {
-                            if (!isPlaying) {
+                            if (!isPlaying || containerWidth == 0 || textWidth == 0) {
                                 animationOffset.snapTo(0f)
                                 return@LaunchedEffect
                             }
-                            if (containerWidth > 0 && textWidth > containerWidth) {
-                                val scrollDistance = (textWidth - containerWidth).toFloat() + 100f
-                                animationOffset.stop()
+                            if (textWidth > containerWidth) {
+                                val scrollDistance = (textWidth - containerWidth).toFloat()
                                 animationOffset.snapTo(0f)
                                 animationOffset.animateTo(
                                     targetValue = scrollDistance,
@@ -145,8 +144,6 @@ fun MiniPlayer(
                                         repeatMode = RepeatMode.Reverse
                                     )
                                 )
-                            } else {
-                                animationOffset.snapTo(0f)
                             }
                         }
 
@@ -168,7 +165,9 @@ fun MiniPlayer(
                                 maxLines = 1,
                                 softWrap = false,
                                 modifier = Modifier
-                                    .offset(x = with(density) { -animationOffset.value.toDp() })
+                                    .graphicsLayer {
+                                        translationX = -animationOffset.value
+                                    }
                                     .onGloballyPositioned { coordinates ->
                                         textWidth = coordinates.size.width
                                     }
