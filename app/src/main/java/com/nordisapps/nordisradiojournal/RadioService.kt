@@ -21,6 +21,11 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.exoplayer.analytics.AnalyticsListener
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.extractor.metadata.icy.IcyInfo
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlin.math.pow
 
 @OptIn(UnstableApi::class)
 class RadioService : MediaSessionService() {
@@ -29,6 +34,7 @@ class RadioService : MediaSessionService() {
     private var reconnectAttempts = 0
     private val maxReconnectAttempts = 5
     private lateinit var player: ExoPlayer
+    private var currentStationName: String = "Radio"
 
     companion object {
         const val CHANNEL_ID = "radio_playback_channel"
@@ -67,7 +73,13 @@ class RadioService : MediaSessionService() {
                 for (i in 0 until metadata.length()) {
                     val entry = metadata[i]
                     if (entry is IcyInfo) {
-                        Log.d("RadioService", "ICY: ${entry.title}")
+                        val raw = entry.title ?: continue
+                        Log.d("RadioService", "ICY: $raw")
+                        val parts = raw.split(" - ", limit = 2)
+                        val artist = if (parts.size == 2) parts[0].trim() else null
+                        val title = if (parts.size == 2) parts[1].trim() else raw.trim()
+
+                        updateNowPlaying(artist, title)
                     }
                 }
             }
@@ -82,10 +94,20 @@ class RadioService : MediaSessionService() {
                 reconnectAttempts++
 
                 player.playWhenReady = false
-                player.seekToDefaultPosition()
-                player.prepare()
+                player.stop()
 
-                Log.d("RadioService", "Reconnecting ... attempts $reconnectAttempts")
+                val delayMs = (2.0.pow(reconnectAttempts.toDouble()) * 1000).toLong()
+
+                CoroutineScope(Dispatchers.Main).launch {
+                    Log.d("RadioService", "Reconnecting in ${delayMs}ms ... attempt $reconnectAttempts")
+                    delay(delayMs)
+                    if (!this@RadioService.isDestroyedOrStopping()) {
+                        player.prepare()
+                        player.play()
+                    }
+                }
+
+                Log.d("RadioService", "Reconnecting... attempts $reconnectAttempts")
 
                 player.play()
             }
@@ -107,7 +129,6 @@ class RadioService : MediaSessionService() {
             }
         })
 
-        // Создаём MediaSession
         mediaSession = MediaSession.Builder(this, player)
             .setCallback(object : MediaSession.Callback {
                 override fun onAddMediaItems(
@@ -149,13 +170,15 @@ class RadioService : MediaSessionService() {
     }
 
     private fun playStream(url: String, name: String, iconUrl: String?) {
+        currentStationName = name
         reconnectAttempts = 0
         val mediaItem = MediaItem.Builder()
             .setUri(url)
             .setMediaMetadata(
                 MediaMetadata.Builder()
-                    .setStation(name)
                     .setArtworkUri(iconUrl?.toUri())
+                    .setTitle(name)
+                    .setArtist(null)
                     .build()
             )
             .build()
@@ -165,12 +188,32 @@ class RadioService : MediaSessionService() {
         player.play()
     }
 
+    private fun updateNowPlaying(artist: String?, title: String) {
+        val currentItem = player.currentMediaItem ?: return
+        val displayTitle = if (artist != null) "$artist - $title" else title
+        val updatedItem = currentItem.buildUpon()
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setArtworkUri(currentItem.mediaMetadata.artworkUri)
+                    .setTitle(displayTitle)
+                    .setArtist(currentStationName)
+                    .build()
+            )
+            .build()
+
+        player.replaceMediaItem(player.currentMediaItemIndex, updatedItem)
+    }
+
     private fun sendBitrate(bitrateKbps: Int) {
         sendBroadcast(
             Intent("com.nordisapps.BITRATE_UPDATE").apply {
                 putExtra("bitrate", bitrateKbps)
             }
         )
+    }
+
+    private fun isDestroyedOrStopping(): Boolean {
+        return mediaSession == null || !::player.isInitialized
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
