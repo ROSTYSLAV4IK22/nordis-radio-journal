@@ -9,7 +9,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.animation.core.animateFloatAsState
@@ -21,8 +20,10 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImagePainter
 import coil.compose.SubcomposeAsyncImage
@@ -43,6 +44,7 @@ fun RadioStationItem(
     location: String?,
     ps: String?,
     rt: String?,
+    hasIssues: Boolean?,
     isFavourite: Boolean,
     onFavouriteClick: () -> Unit,
     onListenClick: () -> Unit
@@ -108,10 +110,22 @@ fun RadioStationItem(
                         }
                         .padding(horizontal = 4.dp)
                 ) {
-                    Text(
-                        name,
-                        style = MaterialTheme.typography.titleMedium
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            name,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        if (hasIssues == true) {
+                            Spacer(Modifier.width(4.dp))
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = null,
+                                tint = Color.Gray,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                    }
+
                     Row {
                         Text(
                             freq,
@@ -162,12 +176,33 @@ fun RadioStationItem(
             }
 
             AnimatedVisibility(expanded) {
-                HorizontalDivider()
                 Column {
-                    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    HorizontalDivider()
+                    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                         Text("${stringResource(R.string.station_location)}: ${location ?: "-"}")
                         Text("PS: ${ps ?: "-"}")
                         Text("RT: ${rt ?: "-"}")
+                    }
+
+                    if (hasIssues == true) {
+                        HorizontalDivider()
+                        Row(
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = null,
+                                tint = Color.Gray,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                text = stringResource(R.string.station_stream_issues),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
 
                     Spacer(Modifier.height(8.dp))
