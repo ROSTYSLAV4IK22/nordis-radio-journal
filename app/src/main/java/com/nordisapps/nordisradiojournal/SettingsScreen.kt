@@ -1,3 +1,5 @@
+@file:Suppress("AssignedValueIsNeverRead")
+
 package com.nordisapps.nordisradiojournal
 
 import androidx.compose.foundation.clickable
@@ -15,6 +17,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -33,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.nordisapps.nordisradiojournal.ui.theme.ThemeMode
 
 private val supportedLanguages = mapOf(
     "en" to "English",
@@ -45,14 +49,18 @@ private val supportedLanguages = mapOf(
 fun SettingsMenu(
     modifier: Modifier = Modifier,
     onLanguageChange: (String) -> Unit,
-    currentLanguage: String
+    currentLanguage: String,
+    currentTheme: ThemeMode,
+    onThemeChange: (ThemeMode) -> Unit
 ) {
     var showLanguageDialog by remember { mutableStateOf(false) }
+    var showThemeDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Card(
             modifier = Modifier
@@ -89,6 +97,42 @@ fun SettingsMenu(
                 )
             }
         }
+
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { showThemeDialog = true },
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Palette,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.theme),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = getThemeDisplayName(currentTheme),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = null
+                )
+            }
+        }
     }
     if (showLanguageDialog) {
         LanguageSelectionDialog(
@@ -98,6 +142,16 @@ fun SettingsMenu(
                 showLanguageDialog = false
             },
             onDismiss = { showLanguageDialog = false }
+        )
+    }
+    if (showThemeDialog) {
+        ThemeSelectionDialog(
+            currentTheme = currentTheme,
+            onThemeChange = { newTheme ->
+                onThemeChange(newTheme)
+                showThemeDialog = false
+            },
+            onDismiss = { showThemeDialog = false }
         )
     }
 }
@@ -147,6 +201,58 @@ fun LanguageSelectionDialog(
     )
 }
 
+@Composable
+fun ThemeSelectionDialog(
+    currentTheme: ThemeMode,
+    onThemeChange: (ThemeMode) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(stringResource(R.string.select_theme))
+        },
+        text = {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                items(ThemeMode.entries) { theme ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onThemeChange(theme) }
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = currentTheme == theme,
+                            onClick = { onThemeChange(theme) }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = getThemeDisplayName(theme),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
+}
+
 fun getLanguageDisplayName(langCode: String): String {
     return supportedLanguages[langCode] ?: langCode
+}
+@Composable
+fun getThemeDisplayName(theme: ThemeMode): String {
+    return when (theme) {
+        ThemeMode.LIGHT -> stringResource(R.string.theme_light)
+        ThemeMode.DARK -> stringResource(R.string.theme_dark)
+        ThemeMode.SYSTEM -> stringResource(R.string.theme_system)
+    }
 }
