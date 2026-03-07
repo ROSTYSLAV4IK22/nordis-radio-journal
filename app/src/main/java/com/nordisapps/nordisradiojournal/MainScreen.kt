@@ -27,9 +27,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -202,12 +202,19 @@ fun MainScreen(
                             onValueChange = { viewModel.setSearchQuery(it) },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .heightIn(min = 56.dp)
+                                .height(48.dp)
                                 .onFocusChanged { focusState ->
                                     isSearchFocused = focusState.isFocused
                                 },
                             shape = RoundedCornerShape(50.dp),
-                            placeholder = { Text(stringResource(R.string.search_placeholder)) },
+                            placeholder = {
+                                Box(modifier = Modifier.fillMaxHeight(), contentAlignment = Alignment.CenterStart) {
+                                    Text(
+                                        stringResource(R.string.search_placeholder),
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                            },
                             leadingIcon = { Icon(Icons.Default.Search, null) },
                             trailingIcon = {
                                 if (searchQuery.isNotEmpty()) {
@@ -241,7 +248,9 @@ fun MainScreen(
                                     trailingIcon = {
                                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCountry)
                                     },
-                                    singleLine = true
+                                    singleLine = true,
+                                    shape = RoundedCornerShape(24.dp),
+                                    textStyle = MaterialTheme.typography.bodyMedium
                                 )
                                 ExposedDropdownMenu(
                                     expanded = expandedCountry,
@@ -276,7 +285,9 @@ fun MainScreen(
                                         trailingIcon = {
                                             ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCity)
                                         },
-                                        singleLine = true
+                                        singleLine = true,
+                                        shape = RoundedCornerShape(24.dp),
+                                        textStyle = MaterialTheme.typography.bodyMedium
                                     )
                                     ExposedDropdownMenu(
                                         expanded = expandedCity,
