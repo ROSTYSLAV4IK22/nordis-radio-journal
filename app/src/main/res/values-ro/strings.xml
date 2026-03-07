@@ -50,5 +50,10 @@
     <string name="current_events">Evenimente actuale</string>
     <string name="no_active_events">Nu există evenimente curente în acest moment</string>
     <string name="station_stream_issues">Acest radio poate avea probleme de streaming (streaming întrerupt sau instabil)</string>
+    <string name="theme">Temă</string>
+    <string name="select_theme">Selectați tema</string>
+    <string name="theme_light">Deschisă</string>
+    <string name="theme_dark">Întunecată</string>
+    <string name="theme_system">Sistem</string>
 
 </resources>

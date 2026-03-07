@@ -50,4 +50,9 @@
     <string name="current_events">Актуальні події</string>
     <string name="no_active_events">Наразі немає актуальних подій</string>
     <string name="station_stream_issues">У цієї радіостанції можуть бути проблеми з потоком (непрацюючий або нестабільний потік)</string>
+    <string name="theme">Тема</string>
+    <string name="select_theme">Оберіть тему</string>
+    <string name="theme_light">Світла</string>
+    <string name="theme_dark">Темна</string>
+    <string name="theme_system">Системна</string>
 </resources>
