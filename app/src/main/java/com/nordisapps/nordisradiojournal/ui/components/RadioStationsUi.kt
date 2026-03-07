@@ -29,6 +29,7 @@ import coil.compose.AsyncImagePainter
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.window.Dialog
 import com.nordisapps.nordisradiojournal.R
 import com.nordisapps.nordisradiojournal.ui.theme.LocalImageLoader
@@ -113,7 +114,9 @@ fun RadioStationItem(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             name,
-                            style = MaterialTheme.typography.titleMedium
+                            style = MaterialTheme.typography.titleMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         if (hasIssues == true) {
                             Spacer(Modifier.width(4.dp))
