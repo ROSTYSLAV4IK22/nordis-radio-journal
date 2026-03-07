@@ -2,6 +2,7 @@
 
 package com.nordisapps.nordisradiojournal
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -21,6 +22,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -56,6 +58,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -70,8 +73,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
 import com.nordisapps.nordisradiojournal.ui.theme.NordisRadioJournalTheme
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
@@ -95,6 +100,7 @@ import com.nordisapps.nordisradiojournal.ui.components.FullPlayer
 import com.nordisapps.nordisradiojournal.ui.components.MiniPlayer
 import com.nordisapps.nordisradiojournal.ui.home.SnowOverlay
 import com.nordisapps.nordisradiojournal.ui.theme.LocalImageLoader
+import com.nordisapps.nordisradiojournal.ui.theme.ThemeMode
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -151,7 +157,23 @@ class MainActivity : ComponentActivity() {
             CompositionLocalProvider(
                 LocalImageLoader provides app.imageLoader
             ) {
-                NordisRadioJournalTheme {
+                val themeMode by getThemeFlow(this@MainActivity)
+                    .collectAsState(initial = ThemeMode.SYSTEM)
+                val darkTheme = when (themeMode) {
+                    ThemeMode.LIGHT -> false
+                    ThemeMode.DARK -> true
+                    ThemeMode.SYSTEM -> isSystemInDarkTheme()
+                }
+                val view = LocalView.current
+                val activity = view.context as Activity
+                val window = activity.window
+                val controller = WindowCompat.getInsetsController(window, view)
+                SideEffect {
+                    controller.isAppearanceLightStatusBars = !darkTheme
+                    controller.isAppearanceLightNavigationBars = !darkTheme
+                }
+
+                NordisRadioJournalTheme(darkTheme = darkTheme) {
                     val currentLanguage by viewModel.languageFlow.collectAsState(
                         initial = LanguageManager.getLanguage(
                             this
@@ -176,7 +198,13 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         currentLanguage = currentLanguage,
-                        initialTab = initialTab
+                        initialTab = initialTab,
+                        currentTheme = themeMode,
+                        onThemeChange = { newTheme ->
+                            lifecycleScope.launch {
+                                saveTheme(this@MainActivity, newTheme)
+                            }
+                        }
                     )
                 }
             }
@@ -312,7 +340,9 @@ class MainActivity : ComponentActivity() {
         onSignOutClick: () -> Unit,
         onLanguageChange: (String) -> Unit,
         currentLanguage: String,
-        initialTab: Int
+        initialTab: Int,
+        currentTheme: ThemeMode,
+        onThemeChange: (ThemeMode) -> Unit
     ) {
         val context = LocalContext.current
         val navController = rememberNavController()
@@ -528,7 +558,9 @@ class MainActivity : ComponentActivity() {
                                 currentLanguage = currentLanguage,
                                 onLanguageChange = { langCode ->
                                     onLanguageChange(langCode)
-                                }
+                                },
+                                currentTheme = currentTheme,
+                                onThemeChange = onThemeChange
                             )
                         }
                         composable("admin_panel") {
@@ -552,23 +584,36 @@ class MainActivity : ComponentActivity() {
                                         }
                                     )
                                 },
-                                onAddStationClicked = { navController.navigate("edit_station_screen") },
+                                onAddStationClicked = {
+                                    val nextId = (uiState.stations.maxOfOrNull { it.displayId ?: 0 }
+                                        ?: 0) + 1
+                                    navController.navigate("edit_station_screen?nextDisplayId=$nextId")
+                                },
                                 onEditStationClicked = { station ->
-                                    navController.navigate("edit_station_screen?stationId=${station.id}")
+                                    navController.navigate("edit_station_screen?stationId=${station.id}&nextDisplayId=null")
                                 }
                             )
                         }
                         composable(
-                            route = "edit_station_screen?stationId={stationId}",
-                            arguments = listOf(navArgument("stationId") {
-                                type = NavType.StringType
-                                nullable = true
-                            })
+                            route = "edit_station_screen?stationId={stationId}&nextDisplayId={nextDisplayId}",
+                            arguments = listOf(
+                                navArgument("stationId") {
+                                    type = NavType.StringType
+                                    nullable = true
+                                },
+                                navArgument("nextDisplayId") {
+                                    type = NavType.StringType
+                                    nullable = true
+                                }
+                            )
                         ) { backStackEntry ->
                             val stationId = backStackEntry.arguments?.getString("stationId")
+                            val nextDisplayId =
+                                backStackEntry.arguments?.getString("nextDisplayId")?.toIntOrNull()
                             EditStationScreen(
                                 stationId = stationId,
                                 uiState = uiState,
+                                nextDisplayId = nextDisplayId,
                                 onSaveStation = { stationToSave ->
                                     viewModel.saveStation(
                                         station = stationToSave,
