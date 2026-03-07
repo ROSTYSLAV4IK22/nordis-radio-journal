@@ -22,7 +22,6 @@ import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.MoreExecutors
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.getValue
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -478,7 +477,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     .child(user.uid)
                     .get()
                     .addOnSuccessListener { snapshot ->
-                        val favoriteIds = snapshot.getValue<List<String>>() ?: emptyList()
+                        val favoriteIds = snapshot.children.mapNotNull { it.getValue(String::class.java) }
                         val favStations = _uiState.value.stations.filter { it.id in favoriteIds }
                         _uiState.value = _uiState.value.copy(favouriteStations = favStations)
                     }
