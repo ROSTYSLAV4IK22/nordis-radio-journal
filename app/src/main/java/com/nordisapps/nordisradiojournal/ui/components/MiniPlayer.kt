@@ -4,10 +4,9 @@ package com.nordisapps.nordisradiojournal.ui.components
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -23,11 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.style.TextOverflow
 import coil.compose.AsyncImagePainter
 import coil.compose.SubcomposeAsyncImage
@@ -118,61 +112,26 @@ fun MiniPlayer(
                         overflow = TextOverflow.Ellipsis
                     )
 
-                    var containerWidth by remember { mutableIntStateOf(0) }
-                    var textWidth by remember { mutableIntStateOf(0) }
-                    val animationOffset = remember(trackTitle) { Animatable(0f) }
-
                     if (!trackTitle.isNullOrBlank() && trackTitle != station.name) {
-                        LaunchedEffect(trackTitle, containerWidth, textWidth, isPlaying) {
-                            if (!isPlaying || containerWidth == 0 || textWidth == 0) {
-                                animationOffset.snapTo(0f)
-                                return@LaunchedEffect
-                            }
-                            if (textWidth > containerWidth) {
-                                val scrollDistance = (textWidth - containerWidth).toFloat()
-                                animationOffset.snapTo(0f)
-                                animationOffset.animateTo(
-                                    targetValue = scrollDistance,
-                                    animationSpec = infiniteRepeatable(
-                                        animation = tween(
-                                            durationMillis = (trackTitle.length * 150).coerceAtLeast(
-                                                3000
-                                            ),
-                                            easing = LinearEasing,
-                                            delayMillis = 1000
-                                        ),
-                                        repeatMode = RepeatMode.Reverse
-                                    )
-                                )
-                            }
-                        }
-
-                        Box(
+                        Text(
+                            text = trackTitle,
+                            maxLines = 1,
+                            softWrap = false,
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            ),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(Color.Transparent)
-                                .padding(top = 2.dp)
-                                .clip(RectangleShape)
-                                .onGloballyPositioned { coordinates ->
-                                    containerWidth = coordinates.size.width
+                                .let {
+                                    if (isPlaying) {
+                                        it.basicMarquee(
+                                            iterations = Int.MAX_VALUE,
+                                            initialDelayMillis = 1200,
+                                            velocity = 25.dp
+                                        )
+                                    } else it
                                 }
-                        ) {
-                            Text(
-                                text = trackTitle,
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                ),
-                                maxLines = 1,
-                                softWrap = false,
-                                modifier = Modifier
-                                    .graphicsLayer {
-                                        translationX = -animationOffset.value
-                                    }
-                                    .onGloballyPositioned { coordinates ->
-                                        textWidth = coordinates.size.width
-                                    }
-                            )
-                        }
+                        )
                     } else if (isPlaying) {
                         Text(
                             text = station.stationCity ?: "Unknown city",
