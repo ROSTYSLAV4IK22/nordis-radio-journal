@@ -1,28 +1,22 @@
 [versions]
 agp = "9.1.0"
-kotlin = "2.3.10"
-coreKtx = "1.17.0"
+kotlin = "2.3.20"
+coreKtx = "1.18.0"
 junit = "4.13.2"
 junitVersion = "1.3.0"
 espressoCore = "3.7.0"
 lifecycleRuntimeKtx = "2.10.0"
-activityCompose = "1.12.4"
-composeBom = "2026.02.01"
+activityCompose = "1.13.0"
+composeBom = "2026.03.00"
 credentials = "1.5.0"
-media3 = "1.9.2"
-datastore = "1.2.0"
+media3 = "1.10.0-rc02"
+datastore = "1.2.1"
 coil = "2.7.0"
 googleid = "1.2.0"
 composeMaterial = "1.7.8"
-firebaseBom = "34.10.0"
+firebaseBom = "34.11.0"
 ggl-services = "4.4.4"
-firebaseDatabase = "21.0.0"
-firebaseFirestore = "25.1.4"
-firebaseAuth = "23.2.1"
 navHost = "2.9.7"
-paging = "3.4.1"
-paging-runtime = "3.4.1"
-paging-runtime-ktx = "3.4.1"
 fragment = "1.8.9"
 
 [libraries]
@@ -53,11 +47,6 @@ androidx-media3-session = { module = "androidx.media3:media3-session", version.r
 # Androidx Datastore
 androidx-datastore = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
 
-# Androidx Paging (not using now)
-androidx-paging-compose = { module = "androidx.paging:paging-compose", version.ref = "paging" }
-androidx-paging-runtime = { module = "androidx.paging:paging-runtime", version.ref = "paging-runtime" }
-androidx-paging-runtime-ktx = { module = "androidx.paging:paging-runtime-ktx", version.ref = "paging-runtime-ktx" }
-
 # Androidx Junit (not using now)
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
@@ -80,9 +69,10 @@ coil-svg = { module = "io.coil-kt:coil-svg", version.ref = "coil" }
 
 # Google Firebase
 google-firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
-google-firebase-database = { module = "com.google.firebase:firebase-database-ktx", version.ref = "firebaseDatabase" }
-google-firebase-firestore = { module = "com.google.firebase:firebase-firestore-ktx", version.ref = "firebaseFirestore" }
-google-firebase-auth = { module = "com.google.firebase:firebase-auth-ktx", version.ref = "firebaseAuth" }
+google-firebase-database = { module = "com.google.firebase:firebase-database" }
+google-firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
+google-firebase-auth = { module = "com.google.firebase:firebase-auth" }
+google-firebase-ai = { module = "com.google.firebase:firebase-ai" }
 
 # Google Sign-In
 googleid = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleid" }
