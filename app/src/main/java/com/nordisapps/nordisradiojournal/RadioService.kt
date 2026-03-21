@@ -7,6 +7,7 @@ import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.util.Log
 import androidx.annotation.OptIn
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Metadata
 import androidx.media3.common.MediaMetadata
@@ -248,7 +249,7 @@ class RadioService : MediaSessionService() {
     }
 
     private fun sendBitrate(bitrateKbps: Int) {
-        sendBroadcast(
+        LocalBroadcastManager.getInstance(this).sendBroadcast(
             Intent("com.nordisapps.BITRATE_UPDATE").apply {
                 putExtra("bitrate", bitrateKbps)
             }
