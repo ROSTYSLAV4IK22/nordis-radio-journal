@@ -3,6 +3,8 @@ package com.nordisapps.nordisradiojournal
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import android.util.Log
 import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
@@ -16,7 +18,6 @@ import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
-import androidx.core.net.toUri
 import androidx.media3.common.PlaybackException
 import androidx.media3.exoplayer.analytics.AnalyticsListener
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
@@ -25,6 +26,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.io.ByteArrayOutputStream
 import kotlin.math.pow
 
 @OptIn(UnstableApi::class)
@@ -73,7 +75,8 @@ class RadioService : MediaSessionService() {
                 for (i in 0 until metadata.length()) {
                     val entry = metadata[i]
                     if (entry is IcyInfo) {
-                        val raw = entry.title ?: continue
+                        val raw = entry.title?.trim() ?: continue
+                        if (raw.isBlank()) continue
                         Log.d("RadioService", "ICY: $raw")
                         val parts = raw.split(" - ", limit = 2)
                         val artist = if (parts.size == 2) parts[0].trim() else null
@@ -172,31 +175,71 @@ class RadioService : MediaSessionService() {
     private fun playStream(url: String, name: String, iconUrl: String?) {
         currentStationName = name
         reconnectAttempts = 0
-        val mediaItem = MediaItem.Builder()
-            .setUri(url)
-            .setMediaMetadata(
-                MediaMetadata.Builder()
-                    .setArtworkUri(iconUrl?.toUri())
-                    .setTitle(name)
-                    .setArtist(null)
-                    .build()
-            )
-            .build()
 
-        player.setMediaItem(mediaItem)
-        player.prepare()
-        player.play()
+        if (iconUrl != null) {
+            val loader = (application as MyApp).imageLoader
+
+            val request = coil.request.ImageRequest.Builder(this)
+                .data(iconUrl)
+                .allowHardware(false)
+                .target { drawable ->
+                    val bitmap = (drawable as BitmapDrawable).bitmap
+                    val stream = ByteArrayOutputStream()
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+                    val artworkData = stream.toByteArray()
+
+                    val mediaItem = MediaItem.Builder()
+                        .setUri(url)
+                        .setMediaMetadata(
+                            MediaMetadata.Builder()
+                                .setTitle(name)
+                                .setArtist(null)
+                                .setArtworkData(
+                                    artworkData,
+                                    MediaMetadata.PICTURE_TYPE_FRONT_COVER
+                                )
+                                .build()
+                        )
+                        .build()
+
+                    player.setMediaItem(mediaItem)
+                    player.prepare()
+                    player.play()
+                }
+                .build()
+
+            loader.enqueue(request)
+        } else {
+            val mediaItem = MediaItem.Builder()
+                .setUri(url)
+                .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setTitle(name)
+                        .setArtist(null)
+                        .build()
+                )
+                .build()
+
+            player.setMediaItem(mediaItem)
+            player.prepare()
+            player.play()
+        }
     }
 
     private fun updateNowPlaying(artist: String?, title: String) {
         val currentItem = player.currentMediaItem ?: return
-        val displayTitle = if (artist != null) "$artist - $title" else title
+        if (title.isBlank()) return
+        val displayTitle = title.trim()
+        val displayArtist = artist?.trim()?.takeIf { it.isNotBlank() }
         val updatedItem = currentItem.buildUpon()
             .setMediaMetadata(
                 MediaMetadata.Builder()
-                    .setArtworkUri(currentItem.mediaMetadata.artworkUri)
+                    .setArtworkData(
+                        currentItem.mediaMetadata.artworkData,
+                        currentItem.mediaMetadata.artworkDataType
+                    )
                     .setTitle(displayTitle)
-                    .setArtist(currentStationName)
+                    .setArtist(displayArtist)
                     .build()
             )
             .build()
