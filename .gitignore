@@ -40,3 +40,6 @@ Thumbs.db
 
 # Admin tools
 app/src/main/java/com/nordisapps/nordisradiojournal/tools/
+
+# Keystore
+keystores
