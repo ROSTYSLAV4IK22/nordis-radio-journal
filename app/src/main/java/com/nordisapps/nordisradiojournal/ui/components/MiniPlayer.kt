@@ -112,7 +112,17 @@ fun MiniPlayer(
                         overflow = TextOverflow.Ellipsis
                     )
 
-                    if (!trackTitle.isNullOrBlank() && trackTitle != station.name) {
+                    if (isClicked) {
+                        Text(
+                            text = station.stationCity ?: "Unknown City",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = MaterialTheme.colorScheme.outline
+                            ),
+                            modifier = Modifier.padding(top = 2.dp),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    } else if (!trackTitle.isNullOrBlank() && trackTitle != station.name) {
                         Text(
                             text = trackTitle,
                             maxLines = 1,
