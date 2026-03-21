@@ -10,10 +10,10 @@ import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.core.content.ContextCompat
 import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -187,6 +187,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 )
             }
             checkAdminStatus(user.uid)
+            mergeFavouritesOnLogin(user.uid)
         } else {
             _uiState.update {
                 it.copy(
@@ -274,12 +275,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             loadAnnouncement()
         }
         loadChristmasDeco()
-        val filter = IntentFilter("com.nordisapps.BITRATE_UPDATE")
-        ContextCompat.registerReceiver(
-            context,
+        LocalBroadcastManager.getInstance(context).registerReceiver(
             bitrateReceiver,
-            filter,
-            ContextCompat.RECEIVER_NOT_EXPORTED
+            IntentFilter("com.nordisapps.BITRATE_UPDATE")
         )
     }
 
@@ -302,9 +300,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                             }
 
                             override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
-                                val trackInfo = mediaMetadata.title?.toString()
-                                    ?: mediaMetadata.artist?.toString()
-                                    ?: mediaMetadata.displayTitle?.toString()
+                                val title = mediaMetadata.title?.toString()
+                                val artist = mediaMetadata.artist?.toString()
+
+                                val trackInfo = when {
+                                    !title.isNullOrBlank() && !artist.isNullOrBlank() -> "$artist - $title"
+                                    !title.isNullOrBlank() -> title
+                                    !artist.isNullOrBlank() -> artist
+                                    else -> null
+                                }
 
                                 if (!trackInfo.isNullOrEmpty()) {
                                     _uiState.value =
@@ -433,7 +437,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     override fun onCleared() {
-        context.unregisterReceiver(bitrateReceiver)
+        LocalBroadcastManager.getInstance(context).unregisterReceiver(bitrateReceiver)
         super.onCleared()
         FirebaseAuth.getInstance().removeAuthStateListener(authStateListener)
         mediaController?.release()
@@ -486,6 +490,37 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val favoriteIds = preferences[FAVORITE_STATIONS_KEY] ?: emptySet()
                 val favStations = _uiState.value.stations.filter { it.id in favoriteIds }
                 _uiState.value = _uiState.value.copy(favouriteStations = favStations)
+            }
+        }
+    }
+
+    private fun mergeFavouritesOnLogin(uid: String) {
+        viewModelScope.launch {
+            val preferences = context.dataStore.data.first()
+            val localIds = preferences[FAVORITE_STATIONS_KEY] ?: emptySet()
+
+            if (localIds.isEmpty()) return@launch
+
+            val ref = FirebaseDatabase.getInstance()
+                .getReference("favorites")
+                .child(uid)
+
+            ref.get().addOnSuccessListener { snapshot ->
+                val firebaseIds = snapshot.children
+                    .mapNotNull { it.getValue(String::class.java) }
+                    .toSet()
+
+                val mergedIds = (localIds + firebaseIds).toList()
+
+                ref.setValue(mergedIds).addOnSuccessListener {
+                    viewModelScope.launch {
+                        context.dataStore.edit { prefs ->
+                            prefs[FAVORITE_STATIONS_KEY] = emptySet()
+                        }
+                    }
+                    val favStations = _uiState.value.stations.filter { it.id in mergedIds }
+                    _uiState.update { it.copy(favouriteStations = favStations) }
+                }
             }
         }
     }
