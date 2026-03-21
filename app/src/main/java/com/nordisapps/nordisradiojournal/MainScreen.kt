@@ -184,6 +184,12 @@ fun MainScreen(
                             }
                         }
                     }
+                    /*
+                    Text(
+                        text = stringResource(R.string.facts),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    */
                 }
             }
 
