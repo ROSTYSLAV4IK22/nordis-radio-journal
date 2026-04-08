@@ -2,6 +2,8 @@
 
 package com.nordisapps.nordisradiojournal.ui.components
 
+import android.content.Intent
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,6 +17,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Warning
@@ -25,6 +28,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImagePainter
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
@@ -35,6 +39,7 @@ import com.nordisapps.nordisradiojournal.R
 import com.nordisapps.nordisradiojournal.ui.theme.LocalImageLoader
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.core.net.toUri
 
 @Composable
 fun RadioStationItem(
@@ -51,6 +56,7 @@ fun RadioStationItem(
     onListenClick: () -> Unit
 ) {
     val imageLoader = LocalImageLoader.current
+    val context = LocalContext.current
     var expanded by remember { mutableStateOf(false) }
     var showImageDialog by remember { mutableStateOf(false) }
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
@@ -208,16 +214,36 @@ fun RadioStationItem(
                         }
                     }
 
-                    Spacer(Modifier.height(8.dp))
-
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 8.dp),
-                        contentAlignment = Alignment.Center
+                            .padding(vertical = 8.dp)
                     ) {
+                        IconButton(
+                            onClick = {
+                                if (location == null || location == "-") {
+                                    Toast.makeText(
+                                        context,
+                                        "Location not supported on this station",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                } else {
+                                    val uri = "geo:0,0?q=$location, $city".toUri()
+                                    val intent = Intent(Intent.ACTION_VIEW, uri)
+                                    context.startActivity(intent)
+                                }
+                            },
+                            modifier = Modifier.align(Alignment.CenterStart)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.LocationOn,
+                                contentDescription = null
+                            )
+                        }
+
                         Button(
-                            onClick = { onListenClick() }
+                            onClick = { onListenClick() },
+                            modifier = Modifier.align(Alignment.Center)
                         )
                         {
                             Icon(

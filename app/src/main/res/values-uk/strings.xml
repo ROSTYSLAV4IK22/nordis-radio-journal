@@ -55,4 +55,10 @@
     <string name="theme_light">Світла</string>
     <string name="theme_dark">Темна</string>
     <string name="theme_system">Системна</string>
+    <string name="facts">Цікаві факти</string>
+    <string name="sleep_timer">Таймер сну</string>
+    <string name="timer_off">Вимк.</string>
+    <string name="timer_cancelled">Таймер сну скасовано</string>
+    <string name="timer_set">Таймер сну встановлено на %1$s хв</string>
+    <string name="timer_active">Таймер сну: %1$s (%2$s хв)</string>
 </resources>

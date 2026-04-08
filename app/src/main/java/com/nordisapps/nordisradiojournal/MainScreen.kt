@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -47,6 +48,7 @@ import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -58,6 +60,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.media3.common.util.UnstableApi
 import coil.compose.SubcomposeAsyncImage
 import com.nordisapps.nordisradiojournal.ui.home.ChristmasDecoCard
+import com.nordisapps.nordisradiojournal.ui.home.FactsCarousel
 import com.nordisapps.nordisradiojournal.ui.theme.LocalImageLoader
 
 data class LocationItem(val key: String, val displayName: String)
@@ -67,7 +70,9 @@ data class LocationItem(val key: String, val displayName: String)
 @Composable
 fun MainScreen(
     viewModel: MainViewModel,
-    selectedTab: Int
+    factsViewModel: RadioFactsViewModel,
+    selectedTab: Int,
+    currentLanguage: String
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val isLoading = uiState.isLoading
@@ -184,12 +189,21 @@ fun MainScreen(
                             }
                         }
                     }
-                    /*
                     Text(
                         text = stringResource(R.string.facts),
                         style = MaterialTheme.typography.titleMedium
                     )
-                    */
+
+                    val facts by factsViewModel.facts.collectAsState()
+
+                    LaunchedEffect(Unit) {
+                        factsViewModel.loadFacts()
+                    }
+
+                    FactsCarousel(
+                        cards = facts,
+                        currentLanguage = currentLanguage
+                    )
                 }
             }
 
@@ -208,7 +222,7 @@ fun MainScreen(
                             onValueChange = { viewModel.setSearchQuery(it) },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(48.dp)
+                                .heightIn(min = 48.dp, max = 56.dp)
                                 .onFocusChanged { focusState ->
                                     isSearchFocused = focusState.isFocused
                                 },

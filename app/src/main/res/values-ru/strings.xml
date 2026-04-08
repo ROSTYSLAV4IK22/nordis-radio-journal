@@ -55,4 +55,10 @@
     <string name="theme_light">Светлая</string>
     <string name="theme_dark">Тёмная</string>
     <string name="theme_system">Системная</string>
+    <string name="facts">Интересные факты</string>
+    <string name="sleep_timer">Таймер сна</string>
+    <string name="timer_off">Выкл.</string>
+    <string name="timer_cancelled">Таймер сна отменён</string>
+    <string name="timer_set">Таймер сна установлен на %1$s мин</string>
+    <string name="timer_active">Таймер сна: %1$s (%2$s мин)</string>
 </resources>

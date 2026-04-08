@@ -55,5 +55,11 @@
     <string name="theme_light">Deschisă</string>
     <string name="theme_dark">Întunecată</string>
     <string name="theme_system">Sistem</string>
+    <string name="facts">Fapte interesante</string>
+    <string name="sleep_timer">Temporizator de somn</string>
+    <string name="timer_off">Oprit</string>
+    <string name="timer_cancelled">Temporizator de somn anulat</string>
+    <string name="timer_set">Temporizator de somn setat pentru %1$s min</string>
+    <string name="timer_active">Temporizator: %1$s (%2$s min)</string>
 
 </resources>

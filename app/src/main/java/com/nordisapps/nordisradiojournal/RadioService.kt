@@ -46,6 +46,8 @@ class RadioService : MediaSessionService() {
         const val ACTION_PAUSE = "com.nordisapps.nordisradiojournal.PAUSE"
         const val ACTION_STOP = "com.nordisapps.nordisradiojournal.STOP"
 
+        const val ACTION_STOP_PLAYBACK = "com.nordisapps.nordisradiojournal.STOP_PLAYBACK"
+
         const val EXTRA_STATION_NAME = "station_name"
         const val EXTRA_STATION_ICON = "station_icon"
         const val EXTRA_STREAM_URL = "stream_url"
@@ -161,12 +163,16 @@ class RadioService : MediaSessionService() {
                 playStream(streamUrl, stationName, stationIcon)
             }
 
-            ACTION_PAUSE -> player.pause()
+            ACTION_PAUSE -> player.stop()
             ACTION_STOP -> {
                 player.stop()
                 player.clearMediaItems()
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 stopSelf()
+            }
+            ACTION_STOP_PLAYBACK -> {
+                player.stop()
+                player.clearMediaItems()
             }
         }
 

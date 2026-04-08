@@ -1,27 +1,39 @@
+@file:Suppress("AssignedValueIsNeverRead")
+
 package com.nordisapps.nordisradiojournal.ui.components
 
+import android.annotation.SuppressLint
+import android.widget.Toast
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.PauseCircleFilled
 import androidx.compose.material.icons.filled.PlayCircleFilled
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -30,7 +42,11 @@ import com.nordisapps.nordisradiojournal.Station
 import com.nordisapps.nordisradiojournal.ui.theme.LocalImageLoader
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+import com.nordisapps.nordisradiojournal.R
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
+@SuppressLint("LocalContextGetResourceValueCall")
 @Composable
 fun FullPlayer(
     modifier: Modifier = Modifier,
@@ -41,12 +57,20 @@ fun FullPlayer(
     currentBitrate: Int?,
     favouriteStations: List<Station>,
     onToggleFavourite: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onSleepTimerSet: (String?) -> Unit
 ) {
     val imageLoader = LocalImageLoader.current
+    val context = LocalContext.current
     val isFavourite = favouriteStations.any { it.id == station.id }
     val offsetY = remember { Animatable(0f) }
     val coroutineScope = rememberCoroutineScope()
+    var showSleepTimerDialog by remember { mutableStateOf(false) }
+    var selectedMinutes by remember { mutableStateOf<String?>(null) }
+    var activeMinutes by remember { mutableStateOf<String?>(null) }
+    val timerOffLabel = stringResource(R.string.timer_off)
+    val timerCancelledLabel = stringResource(R.string.timer_cancelled)
+    var endTime by remember { mutableStateOf<String?>(null) }
 
     Box(
         modifier = modifier
@@ -85,6 +109,19 @@ fun FullPlayer(
                     .fillMaxSize()
                     .windowInsetsPadding(WindowInsets.systemBars)
             ) {
+                IconButton(
+                    onClick = {
+                        showSleepTimerDialog = true
+                        selectedMinutes = activeMinutes },
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(top = 4.dp, start = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Bedtime,
+                        contentDescription = null
+                    )
+                }
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopCenter)
@@ -94,6 +131,18 @@ fun FullPlayer(
                         .clip(RoundedCornerShape(3.dp))
                         .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
                 )
+
+                if (activeMinutes != null && activeMinutes != timerOffLabel) {
+                    AssistChip(
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(top = 20.dp),
+                        onClick = {},
+                        label = { Text(stringResource(R.string.timer_active, endTime ?: "", activeMinutes!!)) },
+                        leadingIcon = { Icon(imageVector = Icons.Default.Timer, contentDescription = null) },
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                }
 
                 Column(
                     modifier = Modifier
@@ -200,5 +249,61 @@ fun FullPlayer(
                 }
             }
         }
+    }
+    if (showSleepTimerDialog) {
+        AlertDialog(
+            onDismissRequest = { showSleepTimerDialog = false },
+            title = { Text(stringResource(R.string.sleep_timer)) },
+            text = {
+                val options = listOf(timerOffLabel, "15", "30", "45", "60")
+
+                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                    options.forEachIndexed { index, minutes ->
+                        SegmentedButton(
+                            selected = selectedMinutes == minutes,
+                            onClick = { selectedMinutes = minutes },
+                            shape = SegmentedButtonDefaults.itemShape(
+                                index = index,
+                                count = options.size
+                            ),
+                            label = {
+                                if (index != 0)
+                                Text("$minutes m")
+                                else
+                                    Text(minutes)
+                            }
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showSleepTimerDialog = false
+                    activeMinutes = selectedMinutes
+                    endTime = if (activeMinutes == timerOffLabel) {
+                        null
+                    } else {
+                        LocalTime.now().plusMinutes(selectedMinutes!!.toLong()).format(
+                            DateTimeFormatter.ofPattern("HH:mm")
+                        )
+                    }
+                    onSleepTimerSet(activeMinutes)
+
+                    val message = if (activeMinutes == null || activeMinutes == timerOffLabel) {
+                        timerCancelledLabel
+                    } else {
+                        context.getString(R.string.timer_set, activeMinutes)
+                    }
+                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSleepTimerDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
     }
 }

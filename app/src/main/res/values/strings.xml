@@ -64,4 +64,10 @@
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
     <string name="theme_system">System</string>
+    <string name="facts">Interesting facts</string>
+    <string name="sleep_timer">Sleep timer</string>
+    <string name="timer_off">Off</string>
+    <string name="timer_cancelled">Sleep timer cancelled</string>
+    <string name="timer_set">Sleep timer set for %1$s min</string>
+    <string name="timer_active">Sleep timer: %1$s (%2$s min)</string>
 </resources>

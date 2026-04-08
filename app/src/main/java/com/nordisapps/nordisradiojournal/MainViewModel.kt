@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.MoreExecutors
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -35,6 +36,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import java.time.LocalDate
 import java.time.Month
+import kotlin.time.Duration.Companion.minutes
 import com.nordisapps.nordisradiojournal.loadStations as fetchStationsFromNetwork
 
 @Suppress("OPT_IN_ARGUMENT_IS_NOT_MARKER")
@@ -55,6 +57,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private val context get() = getApplication<Application>().applicationContext
+
+    private var sleepTimerJob: Job? = null
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery
@@ -413,11 +417,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun togglePlayPause() {
-        mediaController?.let { controller ->
-            if (controller.isPlaying) {
-                controller.pause()
-            } else {
-                controller.play()
+        val state = _uiState.value
+
+        if (state.isPlaying) {
+            stopPlayback()
+        } else {
+            state.currentStation?.let {
+                playStation(it)
             }
         }
     }
@@ -434,6 +440,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             isPlaying = false,
             currentBitrate = null
         )
+    }
+
+    fun stopPlayback() {
+        val intent = Intent(context, RadioService::class.java).apply {
+            action = RadioService.ACTION_STOP_PLAYBACK
+        }
+        context.startService(intent)
+
+        _uiState.update {
+            it.copy(
+                isPlaying = false,
+                currentTrackTitle = null,
+                currentBitrate = null
+            )
+        }
     }
 
     override fun onCleared() {
@@ -577,5 +598,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     onSuccess()
                 }
         }.addOnFailureListener { error -> onFailure(error) }
+    }
+
+    fun setSleepTimer(minutes: String?) {
+        sleepTimerJob?.cancel()
+        val mins = minutes?.toIntOrNull() ?: return
+
+        sleepTimerJob = viewModelScope.launch {
+            delay(mins.minutes)
+            stopPlayback()
+        }
     }
 }

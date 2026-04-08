@@ -116,6 +116,8 @@ class MainActivity : ComponentActivity() {
         }
     }
     private val viewModel: MainViewModel by viewModels()
+
+    private val factsViewModel: RadioFactsViewModel by viewModels()
     private lateinit var credentialManager: CredentialManager
 
     private val _userPhotoUrl = mutableStateOf<String?>(null)
@@ -550,7 +552,9 @@ class MainActivity : ComponentActivity() {
                         composable("home") {
                             MainScreen(
                                 viewModel = viewModel,
-                                selectedTab = selectedTab
+                                factsViewModel = factsViewModel,
+                                selectedTab = selectedTab,
+                                currentLanguage = currentLanguage
                             )
                         }
                         composable("settings") {
@@ -666,7 +670,8 @@ class MainActivity : ComponentActivity() {
                         currentBitrate = uiState.currentBitrate,
                         favouriteStations = uiState.favouriteStations,
                         onToggleFavourite = { viewModel.toggleFavourite(uiState.currentStation!!) },
-                        onDismiss = { showFullPlayer = false }
+                        onDismiss = { showFullPlayer = false },
+                        onSleepTimerSet = { viewModel.setSleepTimer(it) }
                     )
                 }
             }
