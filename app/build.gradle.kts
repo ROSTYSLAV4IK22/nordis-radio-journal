@@ -29,8 +29,8 @@ android {
         applicationId = "com.nordisapps.nordisradiojournal"
         minSdk = 26
         targetSdk = 36
-        versionCode = 4
-        versionName = "0.2.2-alpha"
+        versionCode = 5
+        versionName = "0.3-alpha"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
