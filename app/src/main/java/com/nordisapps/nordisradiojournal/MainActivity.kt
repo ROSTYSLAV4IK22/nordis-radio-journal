@@ -671,7 +671,9 @@ class MainActivity : ComponentActivity() {
                         favouriteStations = uiState.favouriteStations,
                         onToggleFavourite = { viewModel.toggleFavourite(uiState.currentStation!!) },
                         onDismiss = { showFullPlayer = false },
-                        onSleepTimerSet = { viewModel.setSleepTimer(it) }
+                        onSleepTimerSet = { viewModel.setSleepTimer(it) },
+                        activeTimerMinutes = uiState.activeTimerMinutes,
+                        endTimerTime = uiState.endTimerTime
                     )
                 }
             }

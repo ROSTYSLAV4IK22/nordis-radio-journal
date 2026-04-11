@@ -10,7 +10,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -43,8 +42,6 @@ import com.nordisapps.nordisradiojournal.ui.theme.LocalImageLoader
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import com.nordisapps.nordisradiojournal.R
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 
 @SuppressLint("LocalContextGetResourceValueCall")
 @Composable
@@ -58,7 +55,9 @@ fun FullPlayer(
     favouriteStations: List<Station>,
     onToggleFavourite: () -> Unit,
     onDismiss: () -> Unit,
-    onSleepTimerSet: (String?) -> Unit
+    onSleepTimerSet: (String?) -> Unit,
+    activeTimerMinutes: String?,
+    endTimerTime: String?
 ) {
     val imageLoader = LocalImageLoader.current
     val context = LocalContext.current
@@ -70,7 +69,6 @@ fun FullPlayer(
     var activeMinutes by remember { mutableStateOf<String?>(null) }
     val timerOffLabel = stringResource(R.string.timer_off)
     val timerCancelledLabel = stringResource(R.string.timer_cancelled)
-    var endTime by remember { mutableStateOf<String?>(null) }
 
     Box(
         modifier = modifier
@@ -132,13 +130,13 @@ fun FullPlayer(
                         .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
                 )
 
-                if (activeMinutes != null && activeMinutes != timerOffLabel) {
+                if (activeTimerMinutes != null && activeTimerMinutes != timerOffLabel) {
                     AssistChip(
                         modifier = Modifier
                             .align(Alignment.TopCenter)
                             .padding(top = 20.dp),
                         onClick = {},
-                        label = { Text(stringResource(R.string.timer_active, endTime ?: "", activeMinutes!!)) },
+                        label = { Text(stringResource(R.string.timer_active, endTimerTime ?: "", activeTimerMinutes)) },
                         leadingIcon = { Icon(imageVector = Icons.Default.Timer, contentDescription = null) },
                         shape = RoundedCornerShape(16.dp)
                     )
@@ -280,13 +278,6 @@ fun FullPlayer(
                 TextButton(onClick = {
                     showSleepTimerDialog = false
                     activeMinutes = selectedMinutes
-                    endTime = if (activeMinutes == timerOffLabel) {
-                        null
-                    } else {
-                        LocalTime.now().plusMinutes(selectedMinutes!!.toLong()).format(
-                            DateTimeFormatter.ofPattern("HH:mm")
-                        )
-                    }
                     onSleepTimerSet(activeMinutes)
 
                     val message = if (activeMinutes == null || activeMinutes == timerOffLabel) {

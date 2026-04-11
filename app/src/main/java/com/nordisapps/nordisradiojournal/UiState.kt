@@ -16,5 +16,7 @@ data class UiState(
     val recentlyPlayedStations: List<Station> = emptyList(),
     val favouriteStations: List<Station> = emptyList(),
     val adminState: AdminState = AdminState.Unknown,
-    val isUserLoggedIn: Boolean = false
+    val isUserLoggedIn: Boolean = false,
+    val activeTimerMinutes: String? = null,
+    val endTimerTime: String? = null
 )

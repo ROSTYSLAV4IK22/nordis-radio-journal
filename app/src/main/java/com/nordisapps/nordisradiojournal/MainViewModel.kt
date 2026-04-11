@@ -35,7 +35,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.Month
+import java.time.format.DateTimeFormatter
 import kotlin.time.Duration.Companion.minutes
 import com.nordisapps.nordisradiojournal.loadStations as fetchStationsFromNetwork
 
@@ -84,7 +86,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val start = if (today.month >= Month.DECEMBER) {
             LocalDate.of(today.year, Month.DECEMBER, 1)
         } else {
-            LocalDate.of(today.year -1, Month.DECEMBER, 1)
+            LocalDate.of(today.year - 1, Month.DECEMBER, 1)
         }
         val end = start.plusMonths(2)
 
@@ -207,7 +209,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             .getReference("admins")
             .get()
             .addOnSuccessListener { snapshot ->
-            val isAdmin = snapshot.children.any { it.value == uid }
+                val isAdmin = snapshot.children.any { it.value == uid }
                 _uiState.update {
                     it.copy(
                         adminState = if (isAdmin)
@@ -222,7 +224,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     it.copy(adminState = AdminState.NotAdmin)
                 }
             }
-        }
+    }
 
     fun setSearchQuery(query: String) {
         _searchQuery.value = query
@@ -502,7 +504,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     .child(user.uid)
                     .get()
                     .addOnSuccessListener { snapshot ->
-                        val favoriteIds = snapshot.children.mapNotNull { it.getValue(String::class.java) }
+                        val favoriteIds =
+                            snapshot.children.mapNotNull { it.getValue(String::class.java) }
                         val favStations = _uiState.value.stations.filter { it.id in favoriteIds }
                         _uiState.value = _uiState.value.copy(favouriteStations = favStations)
                     }
@@ -520,7 +523,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val preferences = context.dataStore.data.first()
             val localIds = preferences[FAVORITE_STATIONS_KEY] ?: emptySet()
 
-            if (localIds.isEmpty()) return@launch
+            if (localIds.isEmpty()) {
+                loadFavourites()
+                return@launch
+            }
 
             val ref = FirebaseDatabase.getInstance()
                 .getReference("favorites")
@@ -602,11 +608,31 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setSleepTimer(minutes: String?) {
         sleepTimerJob?.cancel()
-        val mins = minutes?.toIntOrNull() ?: return
+        val mins = minutes?.toIntOrNull()
+
+        if (mins == null) {
+            _uiState.update { it.copy(activeTimerMinutes = null) }
+            return
+        }
+
+        _uiState.update {
+            it.copy(
+                activeTimerMinutes = minutes,
+                endTimerTime = LocalTime.now().plusMinutes(minutes.toLong()).format(
+                    DateTimeFormatter.ofPattern("HH:mm")
+                )
+            )
+        }
 
         sleepTimerJob = viewModelScope.launch {
             delay(mins.minutes)
             stopPlayback()
+            _uiState.update {
+                it.copy(
+                    endTimerTime = null,
+                    activeTimerMinutes = null
+                )
+            }
         }
     }
 }
