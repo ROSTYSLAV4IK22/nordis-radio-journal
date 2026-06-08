@@ -77,10 +77,6 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
-import com.nordisapps.nordisradiojournal.ui.theme.NordisRadioJournalTheme
-import androidx.credentials.CredentialManager
-import androidx.credentials.GetCredentialRequest
-import androidx.credentials.exceptions.GetCredentialException
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavType
@@ -90,8 +86,10 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import coil.compose.AsyncImage
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
-import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.nordisapps.nordisradiojournal.tools.AdminPanelScreen
@@ -100,6 +98,7 @@ import com.nordisapps.nordisradiojournal.ui.components.FullPlayer
 import com.nordisapps.nordisradiojournal.ui.components.MiniPlayer
 import com.nordisapps.nordisradiojournal.ui.home.SnowOverlay
 import com.nordisapps.nordisradiojournal.ui.theme.LocalImageLoader
+import com.nordisapps.nordisradiojournal.ui.theme.NordisRadioJournalTheme
 import com.nordisapps.nordisradiojournal.ui.theme.ThemeMode
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -118,7 +117,7 @@ class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
 
     private val factsViewModel: RadioFactsViewModel by viewModels()
-    private lateinit var credentialManager: CredentialManager
+    private lateinit var googleSignInClient: GoogleSignInClient
 
     private val _userPhotoUrl = mutableStateOf<String?>(null)
     val userPhotoUrl: String? get() = _userPhotoUrl.value
@@ -127,6 +126,29 @@ class MainActivity : ComponentActivity() {
     val userName: String? get() = _userName.value
 
     private var initialTab by mutableIntStateOf(0)
+
+    private val signInLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            try {
+                val account = task.getResult(ApiException::class.java)
+                signInToFirebase(
+                    account.idToken!!,
+                    account.displayName,
+                    account.photoUrl?.toString()
+                )
+            } catch (e: ApiException) {
+                Log.e("AUTH", "Google sign in failed", e)
+                Toast.makeText(
+                    this,
+                    getString(R.string.sign_in_error, e.message),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
 
     override fun attachBaseContext(newBase: Context) {
         val langCode = LanguageManager.getLanguage(newBase)
@@ -146,7 +168,12 @@ class MainActivity : ComponentActivity() {
             }
         }
         enableEdgeToEdge()
-        credentialManager = CredentialManager.create(this)
+
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestEmail()
+            .requestIdToken(BuildConfig.GOOGLE_CLIENT_ID)
+            .build()
+        googleSignInClient = GoogleSignIn.getClient(this, gso)
 
         handleIntent(intent)
 
@@ -233,38 +260,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun startSignIn() {
-        val googleIdOption = GetGoogleIdOption.Builder()
-            .setFilterByAuthorizedAccounts(false)
-            .setServerClientId(BuildConfig.GOOGLE_CLIENT_ID)
-            .build()
-
-        val request = GetCredentialRequest.Builder()
-            .addCredentialOption(googleIdOption)
-            .build()
-
-        lifecycleScope.launch {
-            try {
-                val result = credentialManager.getCredential(
-                    request = request,
-                    context = this@MainActivity,
-                )
-                val credential = GoogleIdTokenCredential.createFrom(result.credential.data)
-
-                val idToken = credential.idToken
-                signInToFirebase(
-                    idToken,
-                    credential.displayName,
-                    credential.profilePictureUri?.toString()
-                )
-
-            } catch (e: GetCredentialException) {
-                Toast.makeText(
-                    this@MainActivity,
-                    getString(R.string.sign_in_error, e.message),
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-        }
+        signInLauncher.launch(googleSignInClient.signInIntent)
     }
 
     private fun signInToFirebase(idToken: String, userName: String?, photoUrl: String?) {
@@ -307,9 +303,7 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             try {
                 AuthManager.clearUser(this@MainActivity)
-                credentialManager.clearCredentialState(
-                    androidx.credentials.ClearCredentialStateRequest()
-                )
+                googleSignInClient.signOut()
                 Toast.makeText(
                     this@MainActivity,
                     getString(R.string.signed_out_message),
