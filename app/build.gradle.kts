@@ -29,8 +29,8 @@ android {
         applicationId = "com.nordisapps.nordisradiojournal"
         minSdk = 26
         targetSdk = 36
-        versionCode = 6
-        versionName = "0.3.1-alpha"
+        versionCode = 7
+        versionName = "0.3.2-alpha"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -87,6 +87,7 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.svg)
     implementation(libs.googleid)
+    implementation(libs.google.play.services.auth)
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.material3)
     implementation(platform(libs.google.firebase.bom))

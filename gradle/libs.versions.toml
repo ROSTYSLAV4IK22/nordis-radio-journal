@@ -18,6 +18,7 @@ firebaseBom = "34.11.0"
 ggl-services = "4.4.4"
 navHost = "2.9.7"
 fragment = "1.8.9"
+play-services-auth = "21.2.0"
 
 [libraries]
 # Androidx Compose
@@ -76,6 +77,7 @@ google-firebase-ai = { module = "com.google.firebase:firebase-ai" }
 
 # Google Sign-In
 googleid = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleid" }
+google-play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "play-services-auth" }
 
 [plugins]
 # Android
