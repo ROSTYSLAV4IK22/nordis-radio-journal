@@ -1,4 +1,4 @@
-@file:Suppress("AssignedValueIsNeverRead")
+@file:Suppress("AssignedValueIsNeverRead", "DEPRECATION")
 
 package com.nordisapps.nordisradiojournal
 
@@ -16,93 +16,33 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.AdminPanelSettings
-import androidx.compose.material.icons.filled.Headphones
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.Headphones
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material.icons.outlined.StarBorder
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
-import androidx.navigation.NavType
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
-import coil.compose.AsyncImage
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
-import com.nordisapps.nordisradiojournal.tools.AdminPanelScreen
-import com.nordisapps.nordisradiojournal.tools.EditStationScreen
-import com.nordisapps.nordisradiojournal.ui.components.FullPlayer
-import com.nordisapps.nordisradiojournal.ui.components.MiniPlayer
-import com.nordisapps.nordisradiojournal.ui.home.SnowOverlay
 import com.nordisapps.nordisradiojournal.ui.theme.LocalImageLoader
 import com.nordisapps.nordisradiojournal.ui.theme.NordisRadioJournalTheme
 import com.nordisapps.nordisradiojournal.ui.theme.ThemeMode
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
+import kotlin.time.Duration.Companion.milliseconds
 
 @UnstableApi
 @OptIn(ExperimentalMaterial3Api::class)
@@ -222,7 +162,7 @@ class MainActivity : ComponentActivity() {
                             viewModel.changeLanguage(lang)
 
                             scope.launch {
-                                delay(250)
+                                delay(250.milliseconds)
                                 recreate()
                             }
                         },
@@ -233,7 +173,8 @@ class MainActivity : ComponentActivity() {
                             lifecycleScope.launch {
                                 saveTheme(this@MainActivity, newTheme)
                             }
-                        }
+                        },
+                        factsViewModel = factsViewModel
                     )
                 }
             }
@@ -324,378 +265,6 @@ class MainActivity : ComponentActivity() {
         when (intent?.getStringExtra("shortcut_action")) {
             "open_search" -> initialTab = 1
             "open_favorites" -> initialTab = 2
-        }
-    }
-
-    @Composable
-    fun MainApp(
-        viewModel: MainViewModel,
-        userPhotoUrl: String?,
-        userName: String?,
-        onSignInClick: () -> Unit,
-        onSignOutClick: () -> Unit,
-        onLanguageChange: (String) -> Unit,
-        currentLanguage: String,
-        initialTab: Int,
-        currentTheme: ThemeMode,
-        onThemeChange: (ThemeMode) -> Unit
-    ) {
-        val context = LocalContext.current
-        val navController = rememberNavController()
-        var showUserMenu by remember { mutableStateOf(false) }
-        var showSignOutDialog by remember { mutableStateOf(false) }
-        var showFullPlayer by remember { mutableStateOf(false) }
-        var selectedTab by rememberSaveable(initialTab) { mutableIntStateOf(initialTab) }
-        val uiState by viewModel.uiState.collectAsState()
-
-
-        Box(modifier = Modifier.fillMaxSize()) {
-
-            Scaffold(
-                topBar = {
-                    Column {
-                        TopAppBar(
-                            title = {
-                                val route =
-                                    navController.currentBackStackEntryAsState().value?.destination?.route
-
-                                Text(
-                                    text = buildString {
-                                        append(
-                                            when {
-                                                route == "settings" -> stringResource(R.string.settings_title)
-                                                route == "admin_panel" -> "Админ панель"
-                                                route?.startsWith("edit_station_screen") == true -> {
-                                                    val stationId =
-                                                        navController.currentBackStackEntry
-                                                            ?.arguments
-                                                            ?.getString("stationId")
-                                                    if (stationId == null) "Новая станция" else "Редактирование"
-                                                }
-
-                                                else -> stringResource(R.string.app_name)
-                                            }
-                                        )
-                                        if (viewModel.isChristmas.value) {
-                                            append(" 🎄")
-                                        }
-                                    }
-                                )
-                            },
-                            navigationIcon = {
-                                val route =
-                                    navController.currentBackStackEntryAsState().value?.destination?.route
-                                when {
-                                    route == "settings" || route == "admin_panel" || route?.startsWith(
-                                        "edit_station_screen"
-                                    ) == true -> {
-                                        IconButton(onClick = { navController.popBackStack() }) {
-                                            Icon(
-                                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                                contentDescription = null
-                                            )
-                                        }
-                                    }
-                                }
-                            },
-                            actions = {
-                                val route =
-                                    navController.currentBackStackEntryAsState().value?.destination?.route
-                                // Показываем actions только если НЕ на экране редактирования
-                                if (route?.startsWith("edit_station_screen") != true) {
-                                    IconButton(onClick = {
-                                        navController.navigate("settings") {
-                                            launchSingleTop = true
-                                        }
-                                    }) {
-                                        Icon(
-                                            Icons.Default.Settings,
-                                            contentDescription = "Настройки"
-                                        )
-                                    }
-
-                                    Box {
-                                        if (userPhotoUrl == null) {
-                                            IconButton(onClick = onSignInClick) {
-                                                Icon(
-                                                    Icons.Default.AccountCircle,
-                                                    contentDescription = "Войти"
-                                                )
-                                            }
-                                        } else {
-                                            IconButton(onClick = { showUserMenu = true }) {
-                                                AsyncImage(
-                                                    model = userPhotoUrl,
-                                                    contentDescription = stringResource(R.string.profile),
-                                                    contentScale = ContentScale.Crop,
-                                                    modifier = Modifier
-                                                        .size(32.dp)
-                                                        .clip(CircleShape)
-                                                )
-                                            }
-                                            DropdownMenu(
-                                                expanded = showUserMenu,
-                                                onDismissRequest = { showUserMenu = false }
-                                            ) {
-                                                userName?.let {
-                                                    DropdownMenuItem(
-                                                        text = { Text(it) },
-                                                        onClick = {},
-                                                        leadingIcon = {
-                                                            Icon(
-                                                                Icons.Default.AccountCircle,
-                                                                contentDescription = null
-                                                            )
-                                                        },
-                                                        enabled = false
-                                                    )
-                                                    HorizontalDivider()
-                                                }
-                                                if (uiState.adminState is AdminState.Admin) {
-                                                    DropdownMenuItem(
-                                                        text = { Text(stringResource(R.string.admin_button)) },
-                                                        onClick = {
-                                                            navController.navigate("admin_panel") {
-                                                                launchSingleTop = true
-                                                            }
-                                                            showUserMenu = false
-                                                        },
-                                                        leadingIcon = {
-                                                            Icon(
-                                                                Icons.Default.AdminPanelSettings,
-                                                                contentDescription = null
-                                                            )
-                                                        }
-                                                    )
-                                                }
-                                                DropdownMenuItem(
-                                                    text = { Text(stringResource(R.string.sign_out)) },
-                                                    onClick = {
-                                                        showSignOutDialog = true
-                                                        showUserMenu = false
-                                                    },
-                                                    leadingIcon = {
-                                                        Icon(
-                                                            Icons.AutoMirrored.Filled.ExitToApp,
-                                                            contentDescription = null
-                                                        )
-                                                    }
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        )
-                        HorizontalDivider()
-                    }
-                },
-                bottomBar = {
-                    NavigationBar {
-                        val tabLabels = listOf(
-                            R.string.nav_home,
-                            R.string.nav_search,
-                            R.string.nav_favorites,
-                            R.string.nav_listen
-                        )
-                        val tabIcons = listOf(
-                            Icons.Filled.Home to Icons.Outlined.Home,
-                            Icons.Filled.Search to Icons.Outlined.Search,
-                            Icons.Filled.Star to Icons.Outlined.StarBorder,
-                            Icons.Filled.Headphones to Icons.Outlined.Headphones
-                        )
-                        tabLabels.forEachIndexed { index, labelRes ->
-                            val (filledIcon, outlinedIcon) = tabIcons[index]
-                            NavigationBarItem(
-                                icon = {
-                                    Icon(
-                                        imageVector = if (selectedTab == index) filledIcon else outlinedIcon,
-                                        contentDescription = null
-                                    )
-                                },
-                                label = { Text(stringResource(labelRes)) },
-                                selected = selectedTab == index,
-                                onClick = { selectedTab = index }
-                            )
-                        }
-                    }
-                }
-            ) { padding ->
-                Box(
-                    Modifier
-                        .padding(padding)
-                        .background(Color.Transparent)
-                ) {
-                    NavHost(
-                        navController = navController,
-                        startDestination = "home",
-                        modifier = Modifier.fillMaxSize(),
-                        enterTransition = {
-                            slideInHorizontally(initialOffsetX = { it })
-                        },
-                        exitTransition = {
-                            slideOutHorizontally(targetOffsetX = { -it })
-                        },
-                        popEnterTransition = {
-                            slideInHorizontally(initialOffsetX = { -it })
-                        },
-                        popExitTransition = {
-                            slideOutHorizontally(targetOffsetX = { it })
-                        }
-                    ) {
-                        composable("home") {
-                            MainScreen(
-                                viewModel = viewModel,
-                                factsViewModel = factsViewModel,
-                                selectedTab = selectedTab,
-                                currentLanguage = currentLanguage
-                            )
-                        }
-                        composable("settings") {
-                            SettingsMenu(
-                                currentLanguage = currentLanguage,
-                                onLanguageChange = { langCode ->
-                                    onLanguageChange(langCode)
-                                },
-                                currentTheme = currentTheme,
-                                onThemeChange = onThemeChange
-                            )
-                        }
-                        composable("admin_panel") {
-                            AdminPanelScreen(
-                                uiState = uiState,
-                                onDeleteStationClicked = { station ->
-                                    viewModel.deleteStation(
-                                        station = station,
-                                        onSuccess = {
-                                            Toast.makeText(
-                                                context, "Станция \"${station.name}\" удалена",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        },
-                                        onFailure = { error ->
-                                            Toast.makeText(
-                                                context,
-                                                "Ошибка удаления: ${error.message}",
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                        }
-                                    )
-                                },
-                                onAddStationClicked = {
-                                    val nextId = (uiState.stations.maxOfOrNull { it.displayId ?: 0 }
-                                        ?: 0) + 1
-                                    navController.navigate("edit_station_screen?nextDisplayId=$nextId")
-                                },
-                                onEditStationClicked = { station ->
-                                    navController.navigate("edit_station_screen?stationId=${station.id}&nextDisplayId=null")
-                                }
-                            )
-                        }
-                        composable(
-                            route = "edit_station_screen?stationId={stationId}&nextDisplayId={nextDisplayId}",
-                            arguments = listOf(
-                                navArgument("stationId") {
-                                    type = NavType.StringType
-                                    nullable = true
-                                },
-                                navArgument("nextDisplayId") {
-                                    type = NavType.StringType
-                                    nullable = true
-                                }
-                            )
-                        ) { backStackEntry ->
-                            val stationId = backStackEntry.arguments?.getString("stationId")
-                            val nextDisplayId =
-                                backStackEntry.arguments?.getString("nextDisplayId")?.toIntOrNull()
-                            EditStationScreen(
-                                stationId = stationId,
-                                uiState = uiState,
-                                nextDisplayId = nextDisplayId,
-                                onSaveStation = { stationToSave ->
-                                    viewModel.saveStation(
-                                        station = stationToSave,
-                                        onSuccess = {
-                                            navController.popBackStack()
-                                            Toast.makeText(
-                                                context,
-                                                "Станция сохранена!",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        },
-                                        onFailure = { error ->
-                                            Toast.makeText(
-                                                context,
-                                                "Ошибка сохранения: ${error.message}",
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                        }
-                                    )
-                                }
-                            )
-                        }
-                    }
-                    if (navController.currentBackStackEntryAsState().value?.destination?.route == "home") {
-                        uiState.currentStation?.let { station ->
-                            MiniPlayer(
-                                station = station,
-                                trackTitle = uiState.currentTrackTitle,
-                                isPlaying = uiState.isPlaying,
-                                onPlayPauseClick = { viewModel.togglePlayPause() },
-                                onClose = { viewModel.closePlayer() },
-                                onExpandClick = { showFullPlayer = true },
-                                modifier = Modifier.align(Alignment.BottomCenter)
-                            )
-                        }
-                    }
-                }
-            }
-            AnimatedVisibility(
-                visible = showFullPlayer,
-                enter = slideInVertically(initialOffsetY = { it }),
-                exit = slideOutVertically(targetOffsetY = { it })
-            ) {
-                if (uiState.currentStation != null) {
-                    FullPlayer(
-                        station = uiState.currentStation!!,
-                        trackTitle = uiState.currentTrackTitle,
-                        isPlaying = uiState.isPlaying,
-                        onPlayPauseClick = { viewModel.togglePlayPause() },
-                        currentBitrate = uiState.currentBitrate,
-                        favouriteStations = uiState.favouriteStations,
-                        onToggleFavourite = { viewModel.toggleFavourite(uiState.currentStation!!) },
-                        onDismiss = { showFullPlayer = false },
-                        onSleepTimerSet = { viewModel.setSleepTimer(it) },
-                        activeTimerMinutes = uiState.activeTimerMinutes,
-                        endTimerTime = uiState.endTimerTime
-                    )
-                }
-            }
-            SnowOverlay(
-                enabled = viewModel.isChristmas.value && !showFullPlayer,
-                snowCount = 90
-            )
-        }
-
-        if (showSignOutDialog) {
-            AlertDialog(
-                onDismissRequest = { showSignOutDialog = false },
-                title = { Text(stringResource(R.string.sign_out_dialog_title)) },
-                text = { Text(stringResource(R.string.sign_out_dialog_text)) },
-                confirmButton = {
-                    TextButton(onClick = {
-                        showSignOutDialog = false
-                        onSignOutClick()
-                    }) {
-                        Text(stringResource(R.string.sign_out_dialog_confirm))
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showSignOutDialog = false }) {
-                        Text(stringResource(R.string.cancel))
-                    }
-                }
-            )
         }
     }
 }
