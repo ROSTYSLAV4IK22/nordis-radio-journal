@@ -61,5 +61,6 @@
     <string name="timer_cancelled">Temporizator de somn anulat</string>
     <string name="timer_set">Temporizator de somn setat pentru %1$s min</string>
     <string name="timer_active">Temporizator: %1$s (%2$s min)</string>
+    <string name="about_app_title">Despre aplicație</string>
 
 </resources>

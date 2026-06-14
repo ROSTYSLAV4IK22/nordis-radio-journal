@@ -61,4 +61,5 @@
     <string name="timer_cancelled">Таймер сну скасовано</string>
     <string name="timer_set">Таймер сну встановлено на %1$s хв</string>
     <string name="timer_active">Таймер сну: %1$s (%2$s хв)</string>
+    <string name="about_app_title">Про застосунок</string>
 </resources>

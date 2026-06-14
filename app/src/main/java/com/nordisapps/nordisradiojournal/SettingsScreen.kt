@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material3.AlertDialog
@@ -51,7 +52,8 @@ fun SettingsMenu(
     onLanguageChange: (String) -> Unit,
     currentLanguage: String,
     currentTheme: ThemeMode,
-    onThemeChange: (ThemeMode) -> Unit
+    onThemeChange: (ThemeMode) -> Unit,
+    onAboutClick: () -> Unit
 ) {
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
@@ -133,7 +135,33 @@ fun SettingsMenu(
                 )
             }
         }
+
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onAboutClick() },
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Text(
+                    text = stringResource(R.string.about_app_title),
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
+        }
     }
+
     if (showLanguageDialog) {
         LanguageSelectionDialog(
             currentLanguage = currentLanguage,
