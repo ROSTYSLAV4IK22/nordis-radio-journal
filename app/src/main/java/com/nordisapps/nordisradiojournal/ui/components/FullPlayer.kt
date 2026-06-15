@@ -43,6 +43,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import com.nordisapps.nordisradiojournal.R
 
+@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("LocalContextGetResourceValueCall")
 @Composable
 fun FullPlayer(
@@ -69,6 +70,12 @@ fun FullPlayer(
     var activeMinutes by remember { mutableStateOf<String?>(null) }
     val timerOffLabel = stringResource(R.string.timer_off)
     val timerCancelledLabel = stringResource(R.string.timer_cancelled)
+    val quality = when (currentBitrate ?: 0) {
+        in 0..63 -> "Bad"
+        in 64..127 -> "Poor"
+        in 128..191 -> "Good"
+        else -> "Very Good"
+    }
 
     Box(
         modifier = modifier
@@ -217,10 +224,22 @@ fun FullPlayer(
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        SignalStrengthIndicator(
-                            bitrate = currentBitrate,
-                            modifier = Modifier.size(48.dp)
-                        )
+                        TooltipBox(
+                            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
+                                positioning = TooltipAnchorPosition.Above
+                            ),
+                            tooltip = {
+                                PlainTooltip(caretShape = TooltipDefaults.caretShape()) {
+                                    Text("Network Speed: ${currentBitrate ?: "-"} kbps ($quality)")
+                                }
+                            },
+                            state = rememberTooltipState()
+                        ) {
+                            SignalStrengthIndicator(
+                                bitrate = currentBitrate,
+                                modifier = Modifier.size(48.dp)
+                            )
+                        }
 
                         IconButton(
                             onClick = onPlayPauseClick,
