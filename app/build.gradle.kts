@@ -18,7 +18,7 @@ val googleClientId: String =
 
 android {
     namespace = "com.nordisapps.nordisradiojournal"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         buildConfigField(
