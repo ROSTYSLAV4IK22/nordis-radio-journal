@@ -13,8 +13,26 @@ and browsing a curated catalog of European radio stations.
 - Online radio streaming
 - European radio stations catalog
 - Favorites
-- Search by country and city
+- Search with filters (Country, City, Coverage)
 - Listening history
+
+## 🛠️ Tech Stack
+- Kotlin
+- Jetpack Compose
+- Media3 / ExoPlayer
+- Firebase Realtime Database, Firestore, Auth
+
+## 📱 Supported Android Versions
+- Minimum: Android 8.0 (API 26)
+- Target: Android 16 (API 36)
+
+## 🗺️ Roadmap
+- ✔️ FilterChip-based search filters (Country, City)
+- ✔️ Coverage filter (multi-select)
+- Category filter (multi-select)
+- Station of the Day
+- Voice search
+- Player settings screen
 
 ## ⚠️ Note
 This app works with online streams only.
