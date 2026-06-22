@@ -38,6 +38,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.Month
 import java.time.format.DateTimeFormatter
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import com.nordisapps.nordisradiojournal.loadStations as fetchStationsFromNetwork
 
@@ -59,17 +60,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private val context get() = getApplication<Application>().applicationContext
-
     private var sleepTimerJob: Job? = null
-
-    private val _searchQuery = MutableStateFlow("")
-    val searchQuery: StateFlow<String> = _searchQuery
-
-    private val _selectedCountry = MutableStateFlow<String?>(null)
-    val selectedCountry: StateFlow<String?> = _selectedCountry
-
-    private val _selectedCity = MutableStateFlow<String?>(null)
-    val selectedCity: StateFlow<String?> = _selectedCity
+    private val _filters = MutableStateFlow(SearchFilters())
+    val filters: StateFlow<SearchFilters> = _filters
     private val firestore = FirebaseFirestore.getInstance()
 
     var announcement by mutableStateOf<Announcement?>(null)
@@ -133,9 +126,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         return !today.isBefore(start) && today.isBefore(end)
     }
 
-    fun dismissAnnouncement() {
+    /** fun dismissAnnouncement() {
         announcement = null
-    }
+    } */
 
     private fun loadChristmasDeco() {
         firestore.collection("announcements")
@@ -174,7 +167,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             var attempts = 0
             while (mediaController == null && attempts < 20) {
                 attempts++
-                delay(50)
+                delay(50.milliseconds)
             }
 
             if (mediaController == null) {
@@ -227,48 +220,54 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun setSearchQuery(query: String) {
-        _searchQuery.value = query
+        _filters.update { it.copy(query = query) }
     }
 
     fun setSelectedCountry(country: String?) {
-        _selectedCountry.value = country
-        _selectedCity.value = null
+        _filters.update { it.copy(country = country, city = null) }
     }
 
     fun setSelectedCity(city: String?) {
-        _selectedCity.value = city
+        _filters.update { it.copy(city = city) }
+    }
+
+    fun setSelectedCoverage(coverage: Set<String>) {
+        _filters.update { it.copy(coverage = coverage) }
     }
 
     val filteredStations = combine(
         _uiState.map { it.stations },
-        _searchQuery,
-        _selectedCountry,
-        _selectedCity
-    ) { stations, query, country, city ->
-        val tokens = query
+        _filters
+    ) { stations, filters ->
+        val tokens = filters.query
             .trim()
             .lowercase()
             .split("\\s+".toRegex())
             .filter { it.isNotBlank() }
+
         stations.filter { station ->
             val name = station.name?.lowercase().orEmpty()
             val cityName = station.stationCity?.lowercase().orEmpty()
             val mainCity = station.mainCity?.lowercase().orEmpty()
             val countryName = station.country?.lowercase().orEmpty()
+
             val matchesQuery = tokens.isEmpty() || tokens.all { token ->
                 name.contains(token) ||
                         cityName.contains(token) ||
                         mainCity.contains(token) ||
                         countryName.contains(token)
             }
-            val matchesCountry = country.isNullOrBlank() || station.country?.equals(
-                country,
+
+            val matchesCountry = filters.country.isNullOrBlank() || station.country?.equals(
+                filters.country,
                 ignoreCase = true
             ) == true
-            val matchesCity =
-                city.isNullOrBlank() || station.mainCity?.equals(city, ignoreCase = true) == true
 
-            matchesQuery && matchesCountry && matchesCity
+            val matchesCity = filters.city.isNullOrBlank() || station.mainCity?.equals(filters.city, ignoreCase = true) == true
+
+            val matchesCoverage = filters.coverage.isEmpty() || station.coverage?.any { it in filters.coverage } == true
+
+            matchesQuery && matchesCountry && matchesCity && matchesCoverage
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -461,7 +460,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     override fun onCleared() {
         LocalBroadcastManager.getInstance(context).unregisterReceiver(bitrateReceiver)
-        super.onCleared()
         FirebaseAuth.getInstance().removeAuthStateListener(authStateListener)
         mediaController?.release()
         mediaController = null

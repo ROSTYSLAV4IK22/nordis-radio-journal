@@ -62,5 +62,8 @@
     <string name="timer_set">Temporizator de somn setat pentru %1$s min</string>
     <string name="timer_active">Temporizator: %1$s (%2$s min)</string>
     <string name="about_app_title">Despre aplicație</string>
+    <string name="select_coverage">Acoperire</string>
+    <string name="selected">Selectate</string>
+    <string name="apply">Aplică</string>
 
 </resources>

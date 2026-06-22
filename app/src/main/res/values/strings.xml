@@ -71,4 +71,7 @@
     <string name="timer_set">Sleep timer set for %1$s min</string>
     <string name="timer_active">Sleep timer: %1$s (%2$s min)</string>
     <string name="about_app_title">About app</string>
+    <string name="select_coverage">Coverage</string>
+    <string name="selected">Selected</string>
+    <string name="apply">Apply</string>
 </resources>

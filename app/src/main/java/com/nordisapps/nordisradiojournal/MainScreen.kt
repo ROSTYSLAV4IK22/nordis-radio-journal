@@ -22,9 +22,7 @@ fun MainScreen(
     currentLanguage: String,
     selectedTab: Int
 ) {
-    val searchQuery by viewModel.searchQuery.collectAsState()
-    val selectedCountryKey by viewModel.selectedCountry.collectAsState()
-    val selectedCityKey by viewModel.selectedCity.collectAsState()
+    val filters by viewModel.filters.collectAsState()
     val filteredStations by viewModel.filteredStations.collectAsState()
     val uiState by viewModel.uiState.collectAsState()
     val favourites = uiState.favouriteStations
@@ -44,14 +42,16 @@ fun MainScreen(
 
             1 -> {
                 SearchTab(
-                    searchQuery = searchQuery,
-                    selectedCountryKey = selectedCountryKey,
-                    selectedCityKey = selectedCityKey,
+                    searchQuery = filters.query,
+                    selectedCountryKey = filters.country,
+                    selectedCityKey = filters.city,
+                    selectedCoverageKeys = filters.coverage,
                     filteredStations = filteredStations,
                     favourites = favourites,
                     onSearchQueryChange = { viewModel.setSearchQuery(it) },
                     onCountrySelected = { viewModel.setSelectedCountry(it) },
                     onCitySelected = {viewModel.setSelectedCity(it) },
+                    onCoverageSelected = { viewModel.setSelectedCoverage(it) },
                     onFavouriteClick = { viewModel.toggleFavourite(it) },
                     onListenClick = { viewModel.playStation(it) }
                 )

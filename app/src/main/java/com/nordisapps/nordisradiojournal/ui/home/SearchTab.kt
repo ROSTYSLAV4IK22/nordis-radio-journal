@@ -4,6 +4,8 @@ package com.nordisapps.nordisradiojournal.ui.home
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,20 +17,26 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.LocationCity
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material.icons.filled.SettingsInputAntenna
+import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -47,8 +55,6 @@ import androidx.compose.ui.unit.dp
 import com.nordisapps.nordisradiojournal.R
 import com.nordisapps.nordisradiojournal.Station
 import com.nordisapps.nordisradiojournal.ui.components.RadioStationItem
-import kotlin.collections.find
-import kotlin.collections.forEach
 
 data class LocationItem(val key: String, val displayName: String)
 
@@ -58,11 +64,13 @@ fun SearchTab(
     searchQuery: String,
     selectedCountryKey: String?,
     selectedCityKey: String?,
+    selectedCoverageKeys: Set<String>,
     filteredStations: List<Station>,
     favourites: List<Station>,
     onSearchQueryChange: (String) -> Unit,
     onCountrySelected: (String) -> Unit,
     onCitySelected: (String?) -> Unit,
+    onCoverageSelected: (Set<String>) -> Unit,
     onFavouriteClick: (Station) -> Unit,
     onListenClick: (Station) -> Unit
 ) {
@@ -114,9 +122,9 @@ fun SearchTab(
         )
     }
 
-    var expandedCountry by remember { mutableStateOf(false) }
-
-    var expandedCity by remember { mutableStateOf(false) }
+    var showCountrySheet by remember { mutableStateOf(false) }
+    var showCitySheet by remember { mutableStateOf(false) }
+    var showCoverageSheet by remember { mutableStateOf(false) }
 
     val focusManager = LocalFocusManager.current
     BackHandler(enabled = isSearchFocused || searchQuery.isNotEmpty()) {
@@ -144,7 +152,10 @@ fun SearchTab(
                     },
                 shape = RoundedCornerShape(50.dp),
                 placeholder = {
-                    Box(modifier = Modifier.fillMaxHeight(), contentAlignment = Alignment.CenterStart) {
+                    Box(
+                        modifier = Modifier.fillMaxHeight(),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
                         Text(
                             stringResource(R.string.search_placeholder),
                             style = MaterialTheme.typography.bodyMedium
@@ -165,85 +176,187 @@ fun SearchTab(
             Spacer(Modifier.height(12.dp))
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                ExposedDropdownMenuBox(
-                    expanded = expandedCountry,
-                    onExpandedChange = { expandedCountry = it },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    OutlinedTextField(
-                        value = countries.find { it.key == selectedCountryKey }?.displayName
-                            ?: stringResource(R.string.select_country),
-                        onValueChange = {},
-                        readOnly = true,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
-                        trailingIcon = {
-                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCountry)
-                        },
-                        singleLine = true,
-                        shape = RoundedCornerShape(24.dp),
-                        textStyle = MaterialTheme.typography.bodyMedium
-                    )
-                    ExposedDropdownMenu(
-                        expanded = expandedCountry,
-                        onDismissRequest = { expandedCountry = false }
-                    ) {
-                        countries.forEach { countryItem ->
-                            DropdownMenuItem(
-                                text = { Text(countryItem.displayName) },
-                                onClick = {
-                                    onCountrySelected(countryItem.key)
-                                    onCitySelected(null)
-                                    expandedCountry = false
-                                }
-                            )
-                        }
-                    }
-                }
-
-                if (selectedCountryKey != null) {
-                    ExposedDropdownMenuBox(
-                        expanded = expandedCity,
-                        onExpandedChange = { expandedCity = it },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        val cities = citiesByCountry[selectedCountryKey] ?: emptyList()
-                        OutlinedTextField(
-                            value = cities.find { it.key == selectedCityKey }?.displayName
-                                ?: stringResource(R.string.select_city),
-                            onValueChange = {},
-                            readOnly = true,
-                            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
-                            trailingIcon = {
-                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCity)
-                            },
-                            singleLine = true,
-                            shape = RoundedCornerShape(24.dp),
-                            textStyle = MaterialTheme.typography.bodyMedium
+                FilterChip(
+                    selected = selectedCountryKey != null,
+                    onClick = { showCountrySheet = true },
+                    label = {
+                        Text(
+                            text = countries.find { it.key == selectedCountryKey }?.displayName
+                                ?: stringResource(R.string.select_country)
                         )
-                        ExposedDropdownMenu(
-                            expanded = expandedCity,
-                            onDismissRequest = { expandedCity = false }
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Public,
+                            contentDescription = null
+                        )
+                    },
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = null
+                        )
+                    }
+                )
+
+                if (showCountrySheet) {
+                    ModalBottomSheet(
+                        onDismissRequest = { showCountrySheet = false }
+                    ) {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 16.dp)
                         ) {
-                            cities.forEach { cityItem ->
-                                DropdownMenuItem(
-                                    text = { Text(cityItem.displayName) },
-                                    onClick = {
-                                        onCitySelected(cityItem.key)
-                                        expandedCity = false
-                                    }
+                            items(countries) { countryItem ->
+                                Text(
+                                    text = countryItem.displayName,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            onCountrySelected(countryItem.key)
+                                            onCitySelected(null)
+                                            showCountrySheet = false
+                                        }
+                                        .padding(horizontal = 24.dp, vertical = 16.dp)
                                 )
                             }
                         }
                     }
                 }
-            }
 
-            Spacer(Modifier.height(16.dp))
+                if (selectedCountryKey != null) {
+                    val cities = citiesByCountry[selectedCountryKey] ?: emptyList()
+
+                    FilterChip(
+                        selected = selectedCityKey != null,
+                        onClick = { showCitySheet = true },
+                        label = {
+                            Text(
+                                text = cities.find { it.key == selectedCityKey }?.displayName
+                                    ?: stringResource(R.string.select_city)
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.LocationCity,
+                                contentDescription = null
+                            )
+                        },
+                        trailingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.ArrowDropDown,
+                                contentDescription = null
+                            )
+                        }
+                    )
+
+                    if (showCitySheet) {
+                        ModalBottomSheet(
+                            onDismissRequest = { showCitySheet = false }
+                        ) {
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 16.dp)
+                            ) {
+                                items(cities) { cityItem ->
+                                    Text(
+                                        text = cityItem.displayName,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                onCitySelected(cityItem.key)
+                                                showCitySheet = false
+                                            }
+                                            .padding(horizontal = 24.dp, vertical = 16.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    val coverageOptions = citiesByCountry[selectedCountryKey] ?: emptyList()
+
+                    FilterChip(
+                        selected = selectedCoverageKeys.isNotEmpty(),
+                        onClick = { showCoverageSheet = true },
+                        label = {
+                            Text(
+                                text = if (selectedCoverageKeys.isEmpty())
+                                    stringResource(R.string.select_coverage)
+                                else
+                                    "${selectedCoverageKeys.size} ${stringResource(R.string.selected)}"
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.SettingsInputAntenna,
+                                contentDescription = null
+                            )
+                        },
+                        trailingIcon = {
+                            Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+                        }
+                    )
+
+                    if (showCoverageSheet) {
+                        var draftCoverage by remember(selectedCoverageKeys) {
+                            mutableStateOf(selectedCoverageKeys)
+                        }
+
+                        ModalBottomSheet(
+                            onDismissRequest = { showCoverageSheet = false }
+                        ) {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                items(coverageOptions) { coverageItem ->
+                                    val isChecked = coverageItem.key in draftCoverage
+
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                draftCoverage = if (isChecked) {
+                                                    draftCoverage - coverageItem.key
+                                                } else {
+                                                    draftCoverage + coverageItem.key
+                                                }
+                                            }
+                                            .padding(horizontal = 24.dp, vertical = 16.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Checkbox(
+                                            checked = isChecked,
+                                            onCheckedChange = null
+                                        )
+                                        Spacer(Modifier.width(12.dp))
+                                        Text(text = coverageItem.displayName)
+                                    }
+                                }
+                            }
+
+                            Button(
+                                onClick = {
+                                    onCoverageSelected(draftCoverage)
+                                    showCoverageSheet = false
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 24.dp, vertical = 16.dp)
+                            ) {
+                                Text(stringResource(R.string.apply))
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         val isFilterActive =

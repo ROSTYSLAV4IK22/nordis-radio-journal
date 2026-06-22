@@ -62,4 +62,7 @@
     <string name="timer_set">Таймер сну встановлено на %1$s хв</string>
     <string name="timer_active">Таймер сну: %1$s (%2$s хв)</string>
     <string name="about_app_title">Про застосунок</string>
+    <string name="select_coverage">Покриття</string>
+    <string name="selected">Вибрано</string>
+    <string name="apply">" Застосувати"</string>
 </resources>
