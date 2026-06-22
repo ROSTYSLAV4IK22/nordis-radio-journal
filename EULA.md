@@ -1,5 +1,5 @@
 # End User License Agreement (EULA)
-### NordisRadioJournal — Effective: 2026
+### NordisRadioJournal — Effective: June 23, 2026
 
 ## 1. Acceptance
 By using NordisRadioJournal, you agree to this agreement.
@@ -22,9 +22,15 @@ It is not intended for commercial purposes.
 This app is provided "as is" without warranty of any kind.
 The developer is not liable for any damages arising from the use of this app.
 
-## 6. Changes
+## 6. Service Availability & Termination
+NordisRadioJournal relies on third-party radio streams and Firebase services.
+The developer does not guarantee continuous availability of any station,
+feature, or the app itself, and may modify, suspend, or discontinue the app
+(in whole or in part) at any time, without prior notice and without liability.
+
+## 7. Changes
 This agreement may be updated at any time. Continued use of the app
 constitutes acceptance of the updated terms.
 
-## 7. Contact
+## 8. Contact
 For questions: github.com/ROSTYSLAV4IK22 or E-Mail rostikyacenko2@gmail.com
