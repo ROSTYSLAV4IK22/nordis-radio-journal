@@ -74,4 +74,5 @@
     <string name="select_coverage">Coverage</string>
     <string name="selected">Selected</string>
     <string name="apply">Apply</string>
+    <string name="station_coverage">Coverage</string>
 </resources>

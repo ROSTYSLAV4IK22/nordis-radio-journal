@@ -65,4 +65,5 @@
     <string name="select_coverage">Покриття</string>
     <string name="selected">Вибрано</string>
     <string name="apply">" Застосувати"</string>
+    <string name="station_coverage">Покриття</string>
 </resources>

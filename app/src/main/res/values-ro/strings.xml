@@ -65,5 +65,6 @@
     <string name="select_coverage">Acoperire</string>
     <string name="selected">Selectate</string>
     <string name="apply">Aplică</string>
+    <string name="station_coverage">Acoperire</string>
 
 </resources>

@@ -224,15 +224,25 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun setSelectedCountry(country: String?) {
-        _filters.update { it.copy(country = country, city = null) }
+        _filters.update { it.copy(country = country, city = null, coverage = emptySet()) }
     }
 
     fun setSelectedCity(city: String?) {
-        _filters.update { it.copy(city = city) }
+        _filters.update {
+            it.copy(
+                city = city,
+                coverage = if (city != null) setOf(city) else emptySet()
+            )
+        }
     }
 
     fun setSelectedCoverage(coverage: Set<String>) {
-        _filters.update { it.copy(coverage = coverage) }
+        _filters.update {
+            it.copy(
+                coverage = coverage,
+                city = if (coverage.size == 1) coverage.first() else null
+            )
+        }
     }
 
     val filteredStations = combine(
@@ -263,7 +273,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 ignoreCase = true
             ) == true
 
-            val matchesCity = filters.city.isNullOrBlank() || station.mainCity?.equals(filters.city, ignoreCase = true) == true
+            val matchesCity = if (filters.coverage.isNotEmpty()) {
+                true
+            } else {
+                filters.city.isNullOrBlank() || station.mainCity?.equals(filters.city, ignoreCase = true) == true
+            }
 
             val matchesCoverage = filters.coverage.isEmpty() || station.coverage?.any { it in filters.coverage } == true
 

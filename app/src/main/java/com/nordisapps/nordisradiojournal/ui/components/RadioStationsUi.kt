@@ -40,6 +40,7 @@ import com.nordisapps.nordisradiojournal.ui.theme.LocalImageLoader
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.core.net.toUri
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun RadioStationItem(
@@ -47,6 +48,8 @@ fun RadioStationItem(
     name: String,
     freq: String,
     city: String,
+    coverage: List<String>? = null,
+    mainCity: String? = null,
     location: String?,
     ps: String?,
     rt: String?,
@@ -62,6 +65,9 @@ fun RadioStationItem(
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val scope = rememberCoroutineScope()
     val rotation by animateFloatAsState(if (expanded) 180f else 0f)
+    val showCoverageBadge = coverage?.any {
+        !it.equals(mainCity, ignoreCase = true)
+    } == true
 
     Card(
         modifier = Modifier
@@ -101,7 +107,9 @@ fun RadioStationItem(
                         else -> SubcomposeAsyncImageContent()
                     }
                 }
+
                 Spacer(Modifier.width(12.dp))
+
                 Column(
                     modifier = Modifier
                         .weight(1f)
@@ -110,7 +118,7 @@ fun RadioStationItem(
                             expanded = !expanded
                             if (expanded) {
                                 scope.launch {
-                                    delay(180)
+                                    delay(180.milliseconds)
                                     bringIntoViewRequester.bringIntoView()
                                 }
                             }
@@ -152,6 +160,22 @@ fun RadioStationItem(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+
+
+
+                    if (showCoverageBadge) {
+                        val coverageText = coverage.let {
+                            if (it.size <= 2) it.joinToString(", ")
+                            else "${it.take(2).joinToString(", ")} + ${it.size - 2}"
+                        }
+                        Text(
+                            "📡 $coverageText",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
 
                 IconButton(onClick = { onFavouriteClick() }) {
@@ -170,7 +194,7 @@ fun RadioStationItem(
                         expanded = !expanded
                         if (expanded) {
                             scope.launch {
-                                delay(180)
+                                delay(180.milliseconds)
                                 bringIntoViewRequester.bringIntoView()
                             }
                         }
@@ -187,7 +211,11 @@ fun RadioStationItem(
             AnimatedVisibility(expanded) {
                 Column {
                     HorizontalDivider()
+
                     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                        if (showCoverageBadge) {
+                            Text("${stringResource(R.string.station_coverage)}: ${coverage.joinToString(", ")}")
+                        }
                         Text("${stringResource(R.string.station_location)}: ${location ?: "-"}")
                         Text("PS: ${ps ?: "-"}")
                         Text("RT: ${rt ?: "-"}")

@@ -63,6 +63,8 @@ fun FavoritesTab(
                     name = station.name ?: "",
                     freq = station.freq ?: "",
                     city = station.stationCity ?: "",
+                    coverage = station.coverage,
+                    mainCity = station.mainCity,
                     location = station.location ?: "",
                     ps = station.ps ?: "",
                     rt = station.rt ?: "",
