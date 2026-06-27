@@ -48,6 +48,8 @@ fun RadioStationItem(
     name: String,
     freq: String,
     city: String,
+    category: List<String>? = null,
+    categoryDisplayNames: Map<String, String> = emptyMap(),
     coverage: List<String>? = null,
     mainCity: String? = null,
     location: String?,
@@ -217,6 +219,10 @@ fun RadioStationItem(
                             Text("${stringResource(R.string.station_coverage)}: ${coverage.joinToString(", ")}")
                         }
                         Text("${stringResource(R.string.station_location)}: ${location ?: "-"}")
+                        if (!category.isNullOrEmpty()) {
+                            val displayCategories = category.map { key -> categoryDisplayNames[key] ?: key }
+                            Text("${stringResource(R.string.category)}: ${displayCategories.joinToString(", ")}")
+                        }
                         Text("PS: ${ps ?: "-"}")
                         Text("RT: ${rt ?: "-"}")
                     }

@@ -24,6 +24,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.LocationCity
 import androidx.compose.material.icons.filled.Public
@@ -39,6 +40,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import com.nordisapps.nordisradiojournal.R
 import com.nordisapps.nordisradiojournal.Station
 import com.nordisapps.nordisradiojournal.ui.components.RadioStationItem
+import com.nordisapps.nordisradiojournal.ui.helpers.rememberCategoryDisplayNames
 
 data class LocationItem(val key: String, val displayName: String)
 
@@ -72,7 +75,9 @@ fun SearchTab(
     onCitySelected: (String?) -> Unit,
     onCoverageSelected: (Set<String>) -> Unit,
     onFavouriteClick: (Station) -> Unit,
-    onListenClick: (Station) -> Unit
+    onListenClick: (Station) -> Unit,
+    selectedCategoryKeys: Set<String>,
+    onCategorySelected: (Set<String>) -> Unit
 ) {
     var isSearchFocused by rememberSaveable { mutableStateOf(false) }
 
@@ -103,6 +108,40 @@ fun SearchTab(
     val keyNikolaev = stringResource(R.string.key_city_nikolaev)
     val displayNikolaev = stringResource(R.string.city_nikolaev)
 
+    val keyMusic = stringResource(R.string.key_category_music)
+    val displayMusic = stringResource(R.string.category_music)
+    val keyNews = stringResource(R.string.key_category_news)
+    val displayNews = stringResource(R.string.category_news)
+    val keyTalk = stringResource(R.string.key_category_talk)
+    val displayTalk = stringResource(R.string.category_talk)
+    val keyChurch = stringResource(R.string.key_category_church)
+    val displayChurch = stringResource(R.string.category_church)
+    val keyChildren = stringResource(R.string.key_category_children)
+    val displayChildren = stringResource(R.string.category_children)
+    val keySports = stringResource(R.string.key_category_sports)
+    val displaySports = stringResource(R.string.category_sports)
+    val keyCultural = stringResource(R.string.key_category_cultural)
+    val displayCultural = stringResource(R.string.category_cultural)
+    val keyRegional = stringResource(R.string.key_category_regional)
+    val displayRegional = stringResource(R.string.category_regional)
+
+    val categoryOptions = remember(
+        keyMusic, displayMusic, keyNews, displayNews, keyTalk, displayTalk,
+        keyChurch, displayChurch, keyChildren, displayChildren, keySports, displaySports,
+        keyCultural, displayCultural, keyRegional, displayRegional
+    ) {
+        listOf(
+            LocationItem(keyMusic, displayMusic),
+            LocationItem(keyNews, displayNews),
+            LocationItem(keyTalk, displayTalk),
+            LocationItem(keyChurch, displayChurch),
+            LocationItem(keyChildren, displayChildren),
+            LocationItem(keySports, displaySports),
+            LocationItem(keyCultural, displayCultural),
+            LocationItem(keyRegional, displayRegional)
+        )
+    }
+
     val citiesByCountry = remember(
         keyRomania, keyUkraine, keyConstanta, displayConstanta, keyBrasov, displayBrasov,
         keyBucharest, displayBucharest, keyOdessa, displayOdessa, keyKiev, displayKiev,
@@ -125,6 +164,7 @@ fun SearchTab(
     var showCountrySheet by remember { mutableStateOf(false) }
     var showCitySheet by remember { mutableStateOf(false) }
     var showCoverageSheet by remember { mutableStateOf(false) }
+    var showCategorySheet by remember { mutableStateOf(false) }
 
     val focusManager = LocalFocusManager.current
     BackHandler(enabled = isSearchFocused || searchQuery.isNotEmpty()) {
@@ -356,12 +396,92 @@ fun SearchTab(
                         }
                     }
                 }
+
+                FilterChip(
+                    selected = selectedCategoryKeys.isNotEmpty(),
+                    onClick = { showCategorySheet = true },
+                    label = {
+                        Text(
+                            text = if (selectedCategoryKeys.isEmpty())
+                                stringResource(R.string.select_category)
+                            else
+                                "${selectedCategoryKeys.size} ${stringResource(R.string.selected)}"
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Category,
+                            contentDescription = null
+                        )
+                    },
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = null
+                        )
+                    }
+                )
+
+                if (showCategorySheet) {
+                    var draftCategory by remember(selectedCategoryKeys) {
+                        mutableStateOf(selectedCategoryKeys)
+                    }
+
+                    val categorySheetState = rememberModalBottomSheetState(
+                        skipPartiallyExpanded = true
+                    )
+
+                    ModalBottomSheet(
+                        onDismissRequest = { showCategorySheet = false },
+                        sheetState = categorySheetState
+                    ) {
+                        LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                            items(categoryOptions) { categoryItem ->
+                                val isChecked = categoryItem.key in draftCategory
+
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            draftCategory = if (isChecked) {
+                                                draftCategory - categoryItem.key
+                                            } else {
+                                                draftCategory + categoryItem.key
+                                            }
+                                        }
+                                        .padding(horizontal = 24.dp, vertical = 16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Checkbox(checked = isChecked, onCheckedChange = null)
+                                    Spacer(Modifier.width(12.dp))
+                                    Text(text = categoryItem.displayName)
+                                }
+                            }
+                        }
+                        Button(
+                            onClick = {
+                                onCategorySelected(draftCategory)
+                                showCategorySheet = false
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp, vertical = 16.dp)
+                        ) {
+                            Text(stringResource(R.string.apply))
+                        }
+                    }
+                }
             }
         }
 
         val isFilterActive =
-            searchQuery.isNotEmpty() || selectedCountryKey != null || selectedCityKey != null
-        val showPrompt = searchQuery.isEmpty() && selectedCountryKey == null
+            searchQuery.isNotEmpty() ||
+                    selectedCountryKey != null ||
+                    selectedCityKey != null ||
+                    selectedCoverageKeys.isNotEmpty() ||
+                    selectedCategoryKeys.isNotEmpty()
+        val showPrompt = !isFilterActive
+
         if (showPrompt) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -382,29 +502,31 @@ fun SearchTab(
                     Text(stringResource(R.string.no_stations_found))
                 }
             } else {
-                if (isFilterActive) {
-                    LazyColumn(
-                        modifier = Modifier.padding(horizontal = 8.dp)
-                    ) {
-                        items(
-                            filteredStations,
-                            key = { it.id ?: it.name ?: "" }) { station ->
-                            RadioStationItem(
-                                icon = station.icon ?: "",
-                                name = station.name ?: "",
-                                freq = station.freq ?: "",
-                                city = station.stationCity ?: "",
-                                coverage = station.coverage,
-                                mainCity = station.mainCity,
-                                location = station.location ?: "",
-                                ps = station.ps ?: "",
-                                rt = station.rt ?: "",
-                                hasIssues = station.hasIssues ?: false,
-                                isFavourite = favourites.any { it.id == station.id },
-                                onFavouriteClick = { onFavouriteClick(station) },
-                                onListenClick = { onListenClick(station) }
-                            )
-                        }
+                val categoryDisplayNames = rememberCategoryDisplayNames()
+
+                LazyColumn(
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                ) {
+                    items(
+                        filteredStations,
+                        key = { it.id ?: it.name ?: "" }) { station ->
+                        RadioStationItem(
+                            icon = station.icon ?: "",
+                            name = station.name ?: "",
+                            freq = station.freq ?: "",
+                            city = station.stationCity ?: "",
+                            category = station.category,
+                            categoryDisplayNames = categoryDisplayNames,
+                            coverage = station.coverage,
+                            mainCity = station.mainCity,
+                            location = station.location ?: "",
+                            ps = station.ps ?: "",
+                            rt = station.rt ?: "",
+                            hasIssues = station.hasIssues ?: false,
+                            isFavourite = favourites.any { it.id == station.id },
+                            onFavouriteClick = { onFavouriteClick(station) },
+                            onListenClick = { onListenClick(station) }
+                        )
                     }
                 }
             }

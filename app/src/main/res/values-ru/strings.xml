@@ -66,4 +66,14 @@
     <string name="selected">Выбрано</string>
     <string name="apply">Применить</string>
     <string name="station_coverage">Покрытие</string>
+    <string name="category_music">Музыка</string>
+    <string name="category_news">Новости</string>
+    <string name="category_talk">Разговорное</string>
+    <string name="category_church">Религия</string>
+    <string name="category_sports">Спорт</string>
+    <string name="category_cultural">Культура</string>
+    <string name="category_regional">Региональное</string>
+    <string name="category_children">Детское</string>
+    <string name="select_category">Выбрать категорию</string>
+    <string name="category">Категория</string>
 </resources>

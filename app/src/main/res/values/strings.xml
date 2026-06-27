@@ -75,4 +75,22 @@
     <string name="selected">Selected</string>
     <string name="apply">Apply</string>
     <string name="station_coverage">Coverage</string>
+    <string name="key_category_music" translatable="false">Music</string>
+    <string name="key_category_news" translatable="false">News</string>
+    <string name="key_category_talk" translatable="false">Talk</string>
+    <string name="key_category_church" translatable="false">Church</string>
+    <string name="key_category_children" translatable="false">Children</string>
+    <string name="key_category_sports" translatable="false">Sports</string>
+    <string name="key_category_cultural" translatable="false">Cultural</string>
+    <string name="key_category_regional" translatable="false">Regional</string>
+    <string name="category_music">Music</string>
+    <string name="category_news">News</string>
+    <string name="category_talk">Talk</string>
+    <string name="category_church">Church</string>
+    <string name="category_sports">Sports</string>
+    <string name="category_cultural">Cultural</string>
+    <string name="category_regional">Regional</string>
+    <string name="category_children">Children</string>
+    <string name="select_category">Select category</string>
+    <string name="category">Category</string>
 </resources>

@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.nordisapps.nordisradiojournal.R
 import com.nordisapps.nordisradiojournal.Station
 import com.nordisapps.nordisradiojournal.ui.components.RadioStationItem
+import com.nordisapps.nordisradiojournal.ui.helpers.rememberCategoryDisplayNames
 
 @Composable
 fun FavoritesTab(
@@ -27,6 +28,8 @@ fun FavoritesTab(
     onFavouriteClick: (Station) -> Unit,
     onStationClick: (Station) -> Unit
 ) {
+    val categoryDisplayNames = rememberCategoryDisplayNames()
+
     if (favourites.isEmpty()) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -63,6 +66,8 @@ fun FavoritesTab(
                     name = station.name ?: "",
                     freq = station.freq ?: "",
                     city = station.stationCity ?: "",
+                    category = station.category,
+                    categoryDisplayNames = categoryDisplayNames,
                     coverage = station.coverage,
                     mainCity = station.mainCity,
                     location = station.location ?: "",

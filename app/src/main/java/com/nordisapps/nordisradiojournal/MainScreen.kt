@@ -46,6 +46,7 @@ fun MainScreen(
                     selectedCountryKey = filters.country,
                     selectedCityKey = filters.city,
                     selectedCoverageKeys = filters.coverage,
+                    selectedCategoryKeys = filters.category,
                     filteredStations = filteredStations,
                     favourites = favourites,
                     onSearchQueryChange = { viewModel.setSearchQuery(it) },
@@ -53,7 +54,8 @@ fun MainScreen(
                     onCitySelected = {viewModel.setSelectedCity(it) },
                     onCoverageSelected = { viewModel.setSelectedCoverage(it) },
                     onFavouriteClick = { viewModel.toggleFavourite(it) },
-                    onListenClick = { viewModel.playStation(it) }
+                    onListenClick = { viewModel.playStation(it) },
+                    onCategorySelected = { viewModel.setSelectedCategory(it) }
                 )
             }
 

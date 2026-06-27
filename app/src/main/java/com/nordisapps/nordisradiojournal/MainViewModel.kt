@@ -245,6 +245,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun setSelectedCategory(category: Set<String>) {
+        _filters.update {
+            it.copy(
+                category = category
+            )
+        }
+    }
+
     val filteredStations = combine(
         _uiState.map { it.stations },
         _filters
@@ -280,8 +288,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
 
             val matchesCoverage = filters.coverage.isEmpty() || station.coverage?.any { it in filters.coverage } == true
+            val matchesCategory = filters.category.isEmpty() || station.category?.any { it in filters.category } == true
 
-            matchesQuery && matchesCountry && matchesCity && matchesCoverage
+            matchesQuery && matchesCountry && matchesCity && matchesCoverage && matchesCategory
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 

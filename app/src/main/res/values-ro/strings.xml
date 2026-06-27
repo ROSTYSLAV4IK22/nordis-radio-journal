@@ -66,5 +66,15 @@
     <string name="selected">Selectate</string>
     <string name="apply">Aplică</string>
     <string name="station_coverage">Acoperire</string>
+    <string name="category_music">Muzică</string>
+    <string name="category_news">Știri</string>
+    <string name="category_talk">Talk-show</string>
+    <string name="category_church">Religios</string>
+    <string name="category_sports">Sport</string>
+    <string name="category_cultural">Cultural</string>
+    <string name="category_regional">Regional</string>
+    <string name="category_children">Copii</string>
+    <string name="select_category">Selectați categoria</string>
+    <string name="category">Categorie</string>
 
 </resources>
