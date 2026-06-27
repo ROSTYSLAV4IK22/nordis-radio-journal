@@ -13,8 +13,9 @@ and browsing a curated catalog of European radio stations.
 - Online radio streaming
 - European radio stations catalog
 - Favorites
-- Search with filters (Country, City, Coverage)
+- Search with filters (Country, City, Coverage, Category)
 - Listening history
+- Player settings (network speed indicator, ICY metadata toggle)
 
 ## 🛠️ Tech Stack
 - Kotlin
@@ -29,10 +30,10 @@ and browsing a curated catalog of European radio stations.
 ## 🗺️ Roadmap
 - ✔️ FilterChip-based search filters (Country, City)
 - ✔️ Coverage filter (multi-select)
-- Category filter (multi-select)
+- ✔️ Category filter (multi-select)
+- ✔️ Player settings screen
 - Station of the Day
 - Voice search
-- Player settings screen
 
 ## ⚠️ Note
 This app works with online streams only.
