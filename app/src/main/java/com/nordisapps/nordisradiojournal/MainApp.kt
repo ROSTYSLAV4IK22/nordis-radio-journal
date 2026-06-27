@@ -104,6 +104,7 @@ fun MainApp(
                                     append(
                                         when {
                                             route == "settings" -> stringResource(R.string.settings_title)
+                                            route == "player_settings" -> stringResource(R.string.player_settings_title)
                                             route == "admin_panel" -> "Админ панель"
                                             route == "about" -> stringResource(R.string.about_app_title)
                                             route?.startsWith("edit_station_screen") == true -> {
@@ -127,7 +128,7 @@ fun MainApp(
                             val route =
                                 navController.currentBackStackEntryAsState().value?.destination?.route
                             when {
-                                route == "settings" || route == "admin_panel" || route == "about" || route?.startsWith(
+                                route == "settings" || route == "player_settings" || route == "admin_panel" || route == "about" || route?.startsWith(
                                     "edit_station_screen"
                                 ) == true -> {
                                     IconButton(onClick = { navController.popBackStack() }) {

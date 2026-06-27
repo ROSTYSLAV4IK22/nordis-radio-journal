@@ -19,6 +19,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -53,7 +54,8 @@ fun SettingsMenu(
     currentLanguage: String,
     currentTheme: ThemeMode,
     onThemeChange: (ThemeMode) -> Unit,
-    onAboutClick: () -> Unit
+    onAboutClick: () -> Unit,
+    onPlayerSettingsClick: () -> Unit
 ) {
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
@@ -129,6 +131,36 @@ fun SettingsMenu(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = null
+                )
+            }
+        }
+
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onPlayerSettingsClick() },
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.PlayCircle,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Text(
+                    text = stringResource(R.string.player_settings_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f)
+                )
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                     contentDescription = null

@@ -76,4 +76,9 @@
     <string name="category_children">Детское</string>
     <string name="select_category">Выбрать категорию</string>
     <string name="category">Категория</string>
+    <string name="player_settings_title">Настройки плеера</string>
+    <string name="player_setting_show_speed">Показывать скорость соединения</string>
+    <string name="player_setting_show_speed_desc">Отображать индикатор стабильности соединения при прослушивании</string>
+    <string name="player_setting_icy_metadata">ICY-метаданные</string>
+    <string name="player_setting_icy_metadata_desc">Показывать название трека из потока станции</string>
 </resources>

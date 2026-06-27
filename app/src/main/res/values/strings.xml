@@ -93,4 +93,9 @@
     <string name="category_children">Children</string>
     <string name="select_category">Select category</string>
     <string name="category">Category</string>
+    <string name="player_settings_title">Player settings</string>
+    <string name="player_setting_show_speed">Show network speed</string>
+    <string name="player_setting_show_speed_desc">Display connection stability indicator while listening</string>
+    <string name="player_setting_icy_metadata">ICY metadata</string>
+    <string name="player_setting_icy_metadata_desc">Show track title from the station stream</string>
 </resources>

@@ -42,6 +42,7 @@ import com.nordisapps.nordisradiojournal.ui.theme.LocalImageLoader
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import com.nordisapps.nordisradiojournal.R
+import com.nordisapps.nordisradiojournal.ui.helpers.PlayerSettingsManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("LocalContextGetResourceValueCall")
@@ -62,6 +63,7 @@ fun FullPlayer(
 ) {
     val imageLoader = LocalImageLoader.current
     val context = LocalContext.current
+    val showSpeed = remember { PlayerSettingsManager.isShowSpeedEnabled(context) }
     val isFavourite = favouriteStations.any { it.id == station.id }
     val offsetY = remember { Animatable(0f) }
     val coroutineScope = rememberCoroutineScope()
@@ -224,21 +226,25 @@ fun FullPlayer(
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        TooltipBox(
-                            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
-                                positioning = TooltipAnchorPosition.Above
-                            ),
-                            tooltip = {
-                                PlainTooltip(caretShape = TooltipDefaults.caretShape()) {
-                                    Text("Network Speed: ${currentBitrate ?: "-"} kbps ($quality)")
-                                }
-                            },
-                            state = rememberTooltipState()
-                        ) {
-                            SignalStrengthIndicator(
-                                bitrate = currentBitrate,
-                                modifier = Modifier.size(48.dp)
-                            )
+                        if (showSpeed) {
+                            TooltipBox(
+                                positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
+                                    positioning = TooltipAnchorPosition.Above
+                                ),
+                                tooltip = {
+                                    PlainTooltip(caretShape = TooltipDefaults.caretShape()) {
+                                        Text("Network Speed: ${currentBitrate ?: "-"} kbps ($quality)")
+                                    }
+                                },
+                                state = rememberTooltipState()
+                            ) {
+                                SignalStrengthIndicator(
+                                    bitrate = currentBitrate,
+                                    modifier = Modifier.size(48.dp)
+                                )
+                            }
+                        } else {
+                            Spacer(modifier = Modifier.size(48.dp))
                         }
 
                         IconButton(

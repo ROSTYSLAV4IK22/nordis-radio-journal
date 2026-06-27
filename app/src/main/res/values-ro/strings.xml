@@ -76,5 +76,10 @@
     <string name="category_children">Copii</string>
     <string name="select_category">Selectați categoria</string>
     <string name="category">Categorie</string>
+    <string name="player_settings_title">Setări player</string>
+    <string name="player_setting_show_speed">Afișează viteza rețelei</string>
+    <string name="player_setting_show_speed_desc">Afișează indicatorul de stabilitate a conexiunii în timpul ascultării</string>
+    <string name="player_setting_icy_metadata">Metadate ICY</string>
+    <string name="player_setting_icy_metadata_desc">Afișează titlul piesei din fluxul stației</string>
 
 </resources>

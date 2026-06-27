@@ -16,6 +16,7 @@ import androidx.navigation.navArgument
 import com.nordisapps.nordisradiojournal.tools.AdminPanelScreen
 import com.nordisapps.nordisradiojournal.tools.EditStationScreen
 import com.nordisapps.nordisradiojournal.ui.settings.AboutScreen
+import com.nordisapps.nordisradiojournal.ui.settings.PlayerSettingsScreen
 import com.nordisapps.nordisradiojournal.ui.theme.ThemeMode
 
 @UnstableApi
@@ -65,11 +66,15 @@ fun AppNavigation(
                 },
                 currentTheme = currentTheme,
                 onThemeChange = onThemeChange,
-                onAboutClick = { navController.navigate("about") }
+                onAboutClick = { navController.navigate("about") },
+                onPlayerSettingsClick = { navController.navigate("player_settings") }
             )
         }
         composable("about") {
             AboutScreen()
+        }
+        composable("player_settings") {
+            PlayerSettingsScreen()
         }
         composable("admin_panel") {
             AdminPanelScreen(

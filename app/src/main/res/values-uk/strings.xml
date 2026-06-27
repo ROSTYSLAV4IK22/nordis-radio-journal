@@ -76,4 +76,9 @@
     <string name="category_cultural">Культура</string>
     <string name="select_category">Вибрати категорію</string>
     <string name="category">Категорія</string>
+    <string name="player_settings_title">Налаштування плеєра</string>
+    <string name="player_setting_show_speed">Показувати швидкість з\'єднання</string>
+    <string name="player_setting_show_speed_desc">Відображати індикатор стабільності з\'єднання під час прослуховування</string>
+    <string name="player_setting_icy_metadata">ICY-метадані</string>
+    <string name="player_setting_icy_metadata_desc">Показувати назву треку з потоку станції</string>
 </resources>

@@ -23,12 +23,14 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.exoplayer.analytics.AnalyticsListener
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.extractor.metadata.icy.IcyInfo
+import com.nordisapps.nordisradiojournal.ui.helpers.PlayerSettingsManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import kotlin.math.pow
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(UnstableApi::class)
 class RadioService : MediaSessionService() {
@@ -41,16 +43,15 @@ class RadioService : MediaSessionService() {
 
     companion object {
         const val CHANNEL_ID = "radio_playback_channel"
-
         const val ACTION_PLAY = "com.nordisapps.nordisradiojournal.PLAY"
         const val ACTION_PAUSE = "com.nordisapps.nordisradiojournal.PAUSE"
         const val ACTION_STOP = "com.nordisapps.nordisradiojournal.STOP"
-
         const val ACTION_STOP_PLAYBACK = "com.nordisapps.nordisradiojournal.STOP_PLAYBACK"
-
         const val EXTRA_STATION_NAME = "station_name"
         const val EXTRA_STATION_ICON = "station_icon"
         const val EXTRA_STREAM_URL = "stream_url"
+        const val ACTION_ICY_METADATA_TOGGLE = "com.nordisapps.nordisradiojournal.ICY_METADATA_TOGGLE"
+        const val EXTRA_ICY_ENABLED = "icy_enabled"
     }
 
     override fun onCreate() {
@@ -75,6 +76,7 @@ class RadioService : MediaSessionService() {
             }
 
             override fun onMetadata(metadata: Metadata) {
+                if (!PlayerSettingsManager.isIcyMetadataEnabled(this@RadioService)) return
                 for (i in 0 until metadata.length()) {
                     val entry = metadata[i]
                     if (entry is IcyInfo) {
@@ -106,7 +108,7 @@ class RadioService : MediaSessionService() {
 
                 CoroutineScope(Dispatchers.Main).launch {
                     Log.d("RadioService", "Reconnecting in ${delayMs}ms ... attempt $reconnectAttempts")
-                    delay(delayMs)
+                    delay(delayMs.milliseconds)
                     if (!this@RadioService.isDestroyedOrStopping()) {
                         player.prepare()
                         player.play()
@@ -173,6 +175,10 @@ class RadioService : MediaSessionService() {
             ACTION_STOP_PLAYBACK -> {
                 player.stop()
                 player.clearMediaItems()
+            }
+            ACTION_ICY_METADATA_TOGGLE -> {
+                val enabled = intent.getBooleanExtra(EXTRA_ICY_ENABLED, true)
+                if (!enabled) clearNowPlayingTitle()
             }
         }
 
@@ -260,6 +266,23 @@ class RadioService : MediaSessionService() {
                 putExtra("bitrate", bitrateKbps)
             }
         )
+    }
+
+    private fun clearNowPlayingTitle() {
+        val currentItem = player.currentMediaItem ?: return
+        val updatedItem = currentItem.buildUpon()
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setArtworkData(
+                        currentItem.mediaMetadata.artworkData,
+                        currentItem.mediaMetadata.artworkDataType
+                    )
+                    .setTitle(currentStationName)
+                    .setArtist(null)
+                    .build()
+            )
+            .build()
+        player.replaceMediaItem(player.currentMediaItemIndex, updatedItem)
     }
 
     private fun isDestroyedOrStopping(): Boolean {
