@@ -1,4 +1,6 @@
-package com.nordisapps.nordisradiojournal
+package com.nordisapps.nordisradiojournal.data.model
+
+import com.nordisapps.nordisradiojournal.data.Station
 
 sealed class AdminState {
     object Unknown : AdminState()

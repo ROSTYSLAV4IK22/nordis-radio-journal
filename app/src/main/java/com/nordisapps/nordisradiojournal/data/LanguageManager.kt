@@ -1,4 +1,4 @@
-package com.nordisapps.nordisradiojournal
+package com.nordisapps.nordisradiojournal.data
 
 import android.content.Context
 import androidx.core.content.edit

@@ -1,4 +1,4 @@
-package com.nordisapps.nordisradiojournal
+package com.nordisapps.nordisradiojournal.data
 
 import android.util.Log
 import com.google.firebase.database.FirebaseDatabase

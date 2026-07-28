@@ -1,6 +1,4 @@
-@file:Suppress("AssignedValueIsNeverRead")
-
-package com.nordisapps.nordisradiojournal
+package com.nordisapps.nordisradiojournal.ui.settings
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -38,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.nordisapps.nordisradiojournal.R
 import com.nordisapps.nordisradiojournal.ui.theme.ThemeMode
 
 private val supportedLanguages = mapOf(
@@ -49,7 +48,7 @@ private val supportedLanguages = mapOf(
 
 @Composable
 fun SettingsMenu(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.Companion,
     onLanguageChange: (String) -> Unit,
     currentLanguage: String,
     currentTheme: ThemeMode,
@@ -308,6 +307,7 @@ fun ThemeSelectionDialog(
 fun getLanguageDisplayName(langCode: String): String {
     return supportedLanguages[langCode] ?: langCode
 }
+
 @Composable
 fun getThemeDisplayName(theme: ThemeMode): String {
     return when (theme) {

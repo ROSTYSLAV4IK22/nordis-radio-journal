@@ -22,9 +22,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.nordisapps.nordisradiojournal.RadioFact
-import com.nordisapps.nordisradiojournal.getLocalizedText
+import com.nordisapps.nordisradiojournal.data.model.RadioFact
+import com.nordisapps.nordisradiojournal.data.model.getLocalizedText
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun FactsCarousel(cards: List<RadioFact>, currentLanguage: String) {
@@ -33,10 +34,10 @@ fun FactsCarousel(cards: List<RadioFact>, currentLanguage: String) {
     LaunchedEffect(cards.size) {
         while (true) {
             if (cards.isEmpty()) {
-                delay(500)
+                delay(500.milliseconds)
                 continue
             }
-            delay(5000)
+            delay(5000.milliseconds)
             val nextPage = (pagerState.currentPage + 1) % cards.size
             pagerState.animateScrollToPage(nextPage)
         }

@@ -1,7 +1,8 @@
-package com.nordisapps.nordisradiojournal
+package com.nordisapps.nordisradiojournal.viewmodel
 
 import androidx.lifecycle.ViewModel
 import com.google.firebase.firestore.FirebaseFirestore
+import com.nordisapps.nordisradiojournal.data.model.RadioFact
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlin.collections.filter

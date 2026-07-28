@@ -23,7 +23,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.SubcomposeAsyncImage
 import com.nordisapps.nordisradiojournal.R
-import com.nordisapps.nordisradiojournal.Station
+import com.nordisapps.nordisradiojournal.data.Station
 import com.nordisapps.nordisradiojournal.ui.theme.LocalImageLoader
 
 @Composable

@@ -1,6 +1,6 @@
 @file:Suppress("AssignedValueIsNeverRead")
 
-package com.nordisapps.nordisradiojournal
+package com.nordisapps.nordisradiojournal.ui
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
@@ -59,16 +59,30 @@ import androidx.media3.common.util.UnstableApi
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
+import com.nordisapps.nordisradiojournal.R
+import com.nordisapps.nordisradiojournal.data.model.AdminState
 import com.nordisapps.nordisradiojournal.ui.components.FullPlayer
 import com.nordisapps.nordisradiojournal.ui.components.MiniPlayer
 import com.nordisapps.nordisradiojournal.ui.home.SnowOverlay
 import com.nordisapps.nordisradiojournal.ui.theme.ThemeMode
+import com.nordisapps.nordisradiojournal.viewmodel.AdminViewModel
+import com.nordisapps.nordisradiojournal.viewmodel.AnnouncementsViewModel
+import com.nordisapps.nordisradiojournal.viewmodel.FavouritesViewModel
+import com.nordisapps.nordisradiojournal.viewmodel.PlayerViewModel
+import com.nordisapps.nordisradiojournal.viewmodel.RadioFactsViewModel
+import com.nordisapps.nordisradiojournal.viewmodel.RecentlyPlayedViewModel
+import com.nordisapps.nordisradiojournal.viewmodel.StationsViewModel
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainApp(
-    viewModel: MainViewModel,
+    playerViewModel: PlayerViewModel,
+    stationsViewModel: StationsViewModel,
+    recentlyPlayedViewModel: RecentlyPlayedViewModel,
+    favouritesViewModel: FavouritesViewModel,
+    adminViewModel: AdminViewModel,
+    announcementsViewModel: AnnouncementsViewModel,
     userPhotoUrl: String?,
     userName: String?,
     onSignInClick: () -> Unit,
@@ -86,7 +100,8 @@ fun MainApp(
     var showSignOutDialog by remember { mutableStateOf(false) }
     var showFullPlayer by remember { mutableStateOf(false) }
     var selectedTab by rememberSaveable(initialTab) { mutableIntStateOf(initialTab) }
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by stationsViewModel.uiStateFlow.collectAsState()
+    val playerState by playerViewModel.uiStateFlow.collectAsState()
 
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -118,7 +133,7 @@ fun MainApp(
                                             else -> stringResource(R.string.app_name)
                                         }
                                     )
-                                    if (viewModel.isChristmas.value) {
+                                    if (announcementsViewModel.isChristmas.value) {
                                         append(" 🎄")
                                     }
                                 }
@@ -276,7 +291,12 @@ fun MainApp(
             ) {
                 AppNavigation(
                     navController = navController,
-                    viewModel = viewModel,
+                    stationsViewModel = stationsViewModel,
+                    recentlyPlayedViewModel = recentlyPlayedViewModel,
+                    favouritesViewModel = favouritesViewModel,
+                    adminViewModel = adminViewModel,
+                    announcementsViewModel = announcementsViewModel,
+                    playerViewModel = playerViewModel,
                     factsViewModel = factsViewModel,
                     uiState = uiState,
                     selectedTab = selectedTab,
@@ -288,13 +308,13 @@ fun MainApp(
                 )
 
                 if (navController.currentBackStackEntryAsState().value?.destination?.route == "home") {
-                    uiState.currentStation?.let { station ->
+                    playerState.currentStation?.let { station ->
                         MiniPlayer(
                             station = station,
-                            trackTitle = uiState.currentTrackTitle,
-                            isPlaying = uiState.isPlaying,
-                            onPlayPauseClick = { viewModel.togglePlayPause() },
-                            onClose = { viewModel.closePlayer() },
+                            trackTitle = playerState.currentTrackTitle,
+                            isPlaying = playerState.isPlaying,
+                            onPlayPauseClick = { playerViewModel.togglePlayPause() },
+                            onClose = { playerViewModel.closePlayer() },
                             onExpandClick = { showFullPlayer = true },
                             modifier = Modifier.align(Alignment.BottomCenter)
                         )
@@ -307,24 +327,24 @@ fun MainApp(
             enter = slideInVertically(initialOffsetY = { it }),
             exit = slideOutVertically(targetOffsetY = { it })
         ) {
-            if (uiState.currentStation != null) {
+            if (playerState.currentStation != null) {
                 FullPlayer(
-                    station = uiState.currentStation!!,
-                    trackTitle = uiState.currentTrackTitle,
-                    isPlaying = uiState.isPlaying,
-                    onPlayPauseClick = { viewModel.togglePlayPause() },
-                    currentBitrate = uiState.currentBitrate,
+                    station = playerState.currentStation!!,
+                    trackTitle = playerState.currentTrackTitle,
+                    isPlaying = playerState.isPlaying,
+                    onPlayPauseClick = { playerViewModel.togglePlayPause() },
+                    currentBitrate = playerState.currentBitrate,
                     favouriteStations = uiState.favouriteStations,
-                    onToggleFavourite = { viewModel.toggleFavourite(uiState.currentStation!!) },
+                    onToggleFavourite = { favouritesViewModel.toggleFavourite(playerState.currentStation!!) },
                     onDismiss = { showFullPlayer = false },
-                    onSleepTimerSet = { viewModel.setSleepTimer(it) },
-                    activeTimerMinutes = uiState.activeTimerMinutes,
-                    endTimerTime = uiState.endTimerTime
+                    onSleepTimerSet = { playerViewModel.setSleepTimer(it) },
+                    activeTimerMinutes = playerState.activeTimerMinutes,
+                    endTimerTime = playerState.endTimerTime
                 )
             }
         }
         SnowOverlay(
-            enabled = viewModel.isChristmas.value && !showFullPlayer,
+            enabled = announcementsViewModel.isChristmas.value && !showFullPlayer,
             snowCount = 90
         )
     }

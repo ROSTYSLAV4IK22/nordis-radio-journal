@@ -37,7 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import coil.compose.SubcomposeAsyncImage
-import com.nordisapps.nordisradiojournal.Station
+import com.nordisapps.nordisradiojournal.data.Station
 import com.nordisapps.nordisradiojournal.ui.theme.LocalImageLoader
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt

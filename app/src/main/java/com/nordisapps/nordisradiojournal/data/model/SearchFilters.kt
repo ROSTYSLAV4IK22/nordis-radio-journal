@@ -1,4 +1,4 @@
-package com.nordisapps.nordisradiojournal
+package com.nordisapps.nordisradiojournal.data.model
 
 data class SearchFilters(
     val query: String = "",

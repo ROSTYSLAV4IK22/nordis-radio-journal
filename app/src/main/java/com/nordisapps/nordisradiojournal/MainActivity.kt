@@ -36,9 +36,24 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
+import com.nordisapps.nordisradiojournal.data.AuthManager
+import com.nordisapps.nordisradiojournal.data.LanguageManager
+import com.nordisapps.nordisradiojournal.data.getThemeFlow
+import com.nordisapps.nordisradiojournal.data.saveTheme
+import com.nordisapps.nordisradiojournal.ui.MainApp
 import com.nordisapps.nordisradiojournal.ui.theme.LocalImageLoader
 import com.nordisapps.nordisradiojournal.ui.theme.NordisRadioJournalTheme
 import com.nordisapps.nordisradiojournal.ui.theme.ThemeMode
+import com.nordisapps.nordisradiojournal.viewmodel.AdminViewModel
+import com.nordisapps.nordisradiojournal.viewmodel.AnnouncementsViewModel
+import com.nordisapps.nordisradiojournal.viewmodel.AppViewModelFactory
+import com.nordisapps.nordisradiojournal.viewmodel.AuthViewModel
+import com.nordisapps.nordisradiojournal.viewmodel.FavouritesViewModel
+import com.nordisapps.nordisradiojournal.viewmodel.LanguageViewModel
+import com.nordisapps.nordisradiojournal.viewmodel.PlayerViewModel
+import com.nordisapps.nordisradiojournal.viewmodel.RadioFactsViewModel
+import com.nordisapps.nordisradiojournal.viewmodel.RecentlyPlayedViewModel
+import com.nordisapps.nordisradiojournal.viewmodel.StationsViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -54,8 +69,31 @@ class MainActivity : ComponentActivity() {
             Log.d("MainActivity", "Notification permission granted")
         }
     }
-    private val viewModel: MainViewModel by viewModels()
-
+    private val appViewModelFactory: AppViewModelFactory by lazy {
+        AppViewModelFactory(application, (application as MyApp).sharedState)
+    }
+    private val viewModel: LanguageViewModel by viewModels()
+    private val playerViewModel: PlayerViewModel by viewModels {
+        appViewModelFactory
+    }
+    private val stationsViewModel: StationsViewModel by viewModels {
+        appViewModelFactory
+    }
+    private val favouritesViewModel: FavouritesViewModel by viewModels {
+        appViewModelFactory
+    }
+    private val recentlyPlayedViewModel: RecentlyPlayedViewModel by viewModels {
+        appViewModelFactory
+    }
+    private val adminViewModel: AdminViewModel by viewModels {
+        appViewModelFactory
+    }
+    private val authViewModel: AuthViewModel by viewModels {
+        appViewModelFactory
+    }
+    private val announcementsViewModel: AnnouncementsViewModel by viewModels {
+        appViewModelFactory
+    }
     private val factsViewModel: RadioFactsViewModel by viewModels()
     private lateinit var googleSignInClient: GoogleSignInClient
 
@@ -100,6 +138,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        stationsViewModel
+        favouritesViewModel.loadFavourites()
+        recentlyPlayedViewModel.loadRecentlyPlayed()
+        authViewModel
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
                 != PackageManager.PERMISSION_GRANTED
@@ -152,7 +194,12 @@ class MainActivity : ComponentActivity() {
                     val scope = rememberCoroutineScope()
 
                     MainApp(
-                        viewModel = viewModel,
+                        adminViewModel = adminViewModel,
+                        stationsViewModel = stationsViewModel,
+                        recentlyPlayedViewModel = recentlyPlayedViewModel,
+                        favouritesViewModel = favouritesViewModel,
+                        announcementsViewModel = announcementsViewModel,
+                        playerViewModel = playerViewModel,
                         userPhotoUrl = userPhotoUrl,
                         userName = userName,
                         onSignInClick = { startSignIn() },

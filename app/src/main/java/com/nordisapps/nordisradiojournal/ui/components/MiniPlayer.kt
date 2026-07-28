@@ -26,10 +26,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import coil.compose.AsyncImagePainter
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
-import com.nordisapps.nordisradiojournal.Station
+import com.nordisapps.nordisradiojournal.data.Station
 import com.nordisapps.nordisradiojournal.ui.theme.LocalImageLoader
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun MiniPlayer(
@@ -48,7 +49,7 @@ fun MiniPlayer(
 
     LaunchedEffect(interactionCounter) {
         if (interactionCounter > 0 && isClicked) {
-            delay(2000L)
+            delay(2000L.milliseconds)
             isClicked = false
         }
     }
@@ -200,7 +201,7 @@ private fun EqualizerAnimation() {
     LaunchedEffect(Unit) {
         bars.forEachIndexed { index, bar ->
             launch {
-                delay(index * 120L)
+                delay((index * 120L).milliseconds)
                 while (true) {
                     val target = (15..35).random().toFloat()
                     bar.animateTo(

@@ -1,5 +1,6 @@
-package com.nordisapps.nordisradiojournal
+package com.nordisapps.nordisradiojournal.data.model
 
+@Suppress("PropertyName")
 data class RadioFact(
     val text_en: String = "",
     val text_ro: String = "",

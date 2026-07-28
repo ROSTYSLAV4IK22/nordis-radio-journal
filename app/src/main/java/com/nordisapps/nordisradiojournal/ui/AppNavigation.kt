@@ -1,4 +1,4 @@
-package com.nordisapps.nordisradiojournal
+package com.nordisapps.nordisradiojournal.ui
 
 import android.content.Context
 import android.widget.Toast
@@ -13,17 +13,31 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.nordisapps.nordisradiojournal.ui.settings.SettingsMenu
+import com.nordisapps.nordisradiojournal.data.model.UiState
 import com.nordisapps.nordisradiojournal.tools.AdminPanelScreen
 import com.nordisapps.nordisradiojournal.tools.EditStationScreen
 import com.nordisapps.nordisradiojournal.ui.settings.AboutScreen
 import com.nordisapps.nordisradiojournal.ui.settings.PlayerSettingsScreen
 import com.nordisapps.nordisradiojournal.ui.theme.ThemeMode
+import com.nordisapps.nordisradiojournal.viewmodel.AdminViewModel
+import com.nordisapps.nordisradiojournal.viewmodel.AnnouncementsViewModel
+import com.nordisapps.nordisradiojournal.viewmodel.FavouritesViewModel
+import com.nordisapps.nordisradiojournal.viewmodel.PlayerViewModel
+import com.nordisapps.nordisradiojournal.viewmodel.RadioFactsViewModel
+import com.nordisapps.nordisradiojournal.viewmodel.RecentlyPlayedViewModel
+import com.nordisapps.nordisradiojournal.viewmodel.StationsViewModel
 
 @UnstableApi
 @Composable
 fun AppNavigation(
     navController: NavHostController,
-    viewModel: MainViewModel,
+    playerViewModel: PlayerViewModel,
+    stationsViewModel: StationsViewModel,
+    recentlyPlayedViewModel: RecentlyPlayedViewModel,
+    favouritesViewModel: FavouritesViewModel,
+    adminViewModel: AdminViewModel,
+    announcementsViewModel: AnnouncementsViewModel,
     factsViewModel: RadioFactsViewModel,
     uiState: UiState,
     selectedTab: Int,
@@ -52,7 +66,11 @@ fun AppNavigation(
     ) {
         composable("home") {
             MainScreen(
-                viewModel = viewModel,
+                playerViewModel = playerViewModel,
+                stationsViewModel = stationsViewModel,
+                recentlyPlayedViewModel = recentlyPlayedViewModel,
+                favouritesViewModel = favouritesViewModel,
+                announcementsViewModel = announcementsViewModel,
                 factsViewModel = factsViewModel,
                 selectedTab = selectedTab,
                 currentLanguage = currentLanguage
@@ -80,7 +98,7 @@ fun AppNavigation(
             AdminPanelScreen(
                 uiState = uiState,
                 onDeleteStationClicked = { station ->
-                    viewModel.deleteStation(
+                    adminViewModel.deleteStation(
                         station = station,
                         onSuccess = {
                             Toast.makeText(
@@ -128,7 +146,7 @@ fun AppNavigation(
                 uiState = uiState,
                 nextDisplayId = nextDisplayId,
                 onSaveStation = { stationToSave ->
-                    viewModel.saveStation(
+                    adminViewModel.saveStation(
                         station = stationToSave,
                         onSuccess = {
                             navController.popBackStack()

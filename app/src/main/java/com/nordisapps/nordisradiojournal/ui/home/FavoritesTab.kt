@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.nordisapps.nordisradiojournal.R
-import com.nordisapps.nordisradiojournal.Station
+import com.nordisapps.nordisradiojournal.data.Station
 import com.nordisapps.nordisradiojournal.ui.components.RadioStationItem
 import com.nordisapps.nordisradiojournal.ui.helpers.rememberCategoryDisplayNames
 
