@@ -8,6 +8,7 @@ import com.nordisapps.nordisradiojournal.data.RECENTLY_PLAYED_KEY
 import com.nordisapps.nordisradiojournal.data.Station
 import com.nordisapps.nordisradiojournal.data.dataStore
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 class RecentlyPlayedViewModel(
@@ -44,13 +45,18 @@ class RecentlyPlayedViewModel(
         viewModelScope.launch {
             val preferences = context.dataStore.data.first()
             val historyString = preferences[RECENTLY_PLAYED_KEY] ?: ""
-            if (historyString.isNotEmpty()) {
-                val historyIds = historyString.split(",")
-                val historyStations = historyIds.mapNotNull { id ->
-                    shared.uiState.value.stations.find { it.id == id }
-                }
-                shared.update { it.copy(recentlyPlayedStations = historyStations) }
+            if (historyString.isEmpty()) return@launch
+
+            val historyIds = historyString.split(",")
+
+            val stations = shared.uiState
+                .map { it.stations }
+                .first { it.isNotEmpty() }
+
+            val historyStations = historyIds.mapNotNull { id ->
+                stations.find { it.id == id }
             }
+            shared.update { it.copy(recentlyPlayedStations = historyStations) }
         }
     }
 }

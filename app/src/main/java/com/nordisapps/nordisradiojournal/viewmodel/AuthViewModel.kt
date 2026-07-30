@@ -9,7 +9,8 @@ import com.nordisapps.nordisradiojournal.data.model.AdminState
 class AuthViewModel(
     application: Application,
     private val shared: SharedStateHolder,
-    private val onUserLoggedIn: (uid: String) -> Unit
+    private val onUserLoggedIn: (uid: String) -> Unit,
+    private val onGuestSession: () -> Unit
 ) : AndroidViewModel(application) {
     private val authStateListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
         val user = firebaseAuth.currentUser
@@ -29,6 +30,7 @@ class AuthViewModel(
                     adminState = AdminState.NotAdmin
                 )
             }
+            onGuestSession()
         }
     }
 

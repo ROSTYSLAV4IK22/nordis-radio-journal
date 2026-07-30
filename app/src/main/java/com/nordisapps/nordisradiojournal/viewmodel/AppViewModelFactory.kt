@@ -21,7 +21,11 @@ class AppViewModelFactory(
                 stationsViewModel = vm
                 vm as T
             }
-            FavouritesViewModel::class.java -> FavouritesViewModel(application, shared) as T
+            FavouritesViewModel::class.java -> {
+                val vm = FavouritesViewModel(application, shared)
+                favouritesViewModel = vm
+                vm as T
+            }
             RecentlyPlayedViewModel::class.java -> RecentlyPlayedViewModel(application, shared) as T
             AdminViewModel::class.java -> AdminViewModel(
                 application,
@@ -31,7 +35,8 @@ class AppViewModelFactory(
             AuthViewModel::class.java -> AuthViewModel(
                 application,
                 shared,
-                onUserLoggedIn = { uid -> favouritesViewModel?.mergeFavouritesOnLogin(uid) }
+                onUserLoggedIn = { uid -> favouritesViewModel?.mergeFavouritesOnLogin(uid) },
+                onGuestSession = { favouritesViewModel?.loadFavourites() }
             ) as T
             AnnouncementsViewModel::class.java -> AnnouncementsViewModel(application, shared) as T
             else -> super.create(modelClass)

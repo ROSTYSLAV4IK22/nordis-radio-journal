@@ -248,38 +248,41 @@ fun MainApp(
                 }
             },
             bottomBar = {
-                NavigationBar {
-                    val tabLabels = listOf(
-                        R.string.nav_home,
-                        R.string.nav_search,
-                        R.string.nav_favorites,
-                        R.string.nav_listen
-                    )
-                    val tabIcons = listOf(
-                        Icons.Filled.Home to Icons.Outlined.Home,
-                        Icons.Filled.Search to Icons.Outlined.Search,
-                        Icons.Filled.Star to Icons.Outlined.StarBorder,
-                        Icons.Filled.Headphones to Icons.Outlined.Headphones
-                    )
-                    tabLabels.forEachIndexed { index, labelRes ->
-                        val (filledIcon, outlinedIcon) = tabIcons[index]
-                        NavigationBarItem(
-                            icon = {
-                                Icon(
-                                    imageVector = if (selectedTab == index) filledIcon else outlinedIcon,
-                                    contentDescription = null
-                                )
-                            },
-                            label = { Text(stringResource(labelRes)) },
-                            selected = selectedTab == index,
-                            onClick = {
-                                selectedTab = index
-                                navController.navigate("home") {
-                                    launchSingleTop = true
-                                    popUpTo("home") { inclusive = false }
-                                }
-                            }
+                val route = navController.currentBackStackEntryAsState().value?.destination?.route
+                if (route == "home") {
+                    NavigationBar {
+                        val tabLabels = listOf(
+                            R.string.nav_home,
+                            R.string.nav_search,
+                            R.string.nav_favorites,
+                            R.string.nav_listen
                         )
+                        val tabIcons = listOf(
+                            Icons.Filled.Home to Icons.Outlined.Home,
+                            Icons.Filled.Search to Icons.Outlined.Search,
+                            Icons.Filled.Star to Icons.Outlined.StarBorder,
+                            Icons.Filled.Headphones to Icons.Outlined.Headphones
+                        )
+                        tabLabels.forEachIndexed { index, labelRes ->
+                            val (filledIcon, outlinedIcon) = tabIcons[index]
+                            NavigationBarItem(
+                                icon = {
+                                    Icon(
+                                        imageVector = if (selectedTab == index) filledIcon else outlinedIcon,
+                                        contentDescription = null
+                                    )
+                                },
+                                label = { Text(stringResource(labelRes)) },
+                                selected = selectedTab == index,
+                                onClick = {
+                                    selectedTab = index
+                                    navController.navigate("home") {
+                                        launchSingleTop = true
+                                        popUpTo("home") { inclusive = false }
+                                    }
+                                }
+                            )
+                        }
                     }
                 }
             }
